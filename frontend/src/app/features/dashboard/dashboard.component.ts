@@ -1,4 +1,5 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -12,7 +13,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [EmptyStateComponent, HeatmapComponent],
+  imports: [EmptyStateComponent, HeatmapComponent, DecimalPipe],
   template: `
     <div class="space-y-6">
       <!-- Stats Cards -->
