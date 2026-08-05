@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: moein
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: moein_dashboard
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://moein:${DB_PASSWORD}@db:5432/moein_dashboard
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      CORS_ORIGIN: http://localhost:4200
+      AUTH_USERNAME: moein
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

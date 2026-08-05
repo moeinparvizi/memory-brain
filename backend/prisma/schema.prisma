@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  googleId      String    @unique
+  email         String    @unique
+  name          String
+  avatar        String?
+  phases        Phase[]
+  schedules     ScheduleBlock[]
+  workouts      WorkoutSession[]
+  workoutLogs   WorkoutLog[]
+  timeSlots     TimeSlot[]
+  habits        Habit[]
+  financeEntries FinanceEntry[]
+  debts         Debt[]
+  resources     Resource[]
+  checklists    ChecklistItem[]
+  settings      Setting[]
+  createdAt     DateTime  @default(now())
+}
+
+model Phase {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  duration    String
+  goal        String
+  status      String   @default("not-started")
+  progress    Int      @default(0)
+  order       Int
+  tasks       Task[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  phaseId     Int
+  phase       Phase    @relation(fields: [phaseId], references: [id], onDelete: Cascade)
+  month       Int
+  topic       String
+  output      String?
+  done        Boolean  @default(false)
+  notes       String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ScheduleBlock {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dayType     String
+  startTime   String
+  endTime     String
+  activity    String
+  category    String
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model WorkoutSession {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day         String
+  startTime   String
+  endTime     String
+  type        String
+  duration    String
+  exercises   Exercise[]
+  logs        WorkoutLog[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Exercise {
+  id          Int      @id @default(autoincrement())
+  sessionId   Int
+  session     WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name        String
+  sets        Int?
+  reps        String?
+  weight      String?
+  order       Int
+}
+
+model WorkoutLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId   Int
+  session     WorkoutSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  date        DateTime @default(now())
+  completed   Boolean  @default(true)
+  notes       String?
+}
+
+model TimeSlot {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label       String
+  time        String
+  emoji       String?
+  order       Int
+  supplements Supplement[]
+}
+
+model Supplement {
+  id            Int      @id @default(autoincrement())
+  timeSlotId    Int
+  timeSlot      TimeSlot @relation(fields: [timeSlotId], references: [id], onDelete: Cascade)
+  name          String
+  dose          String?
+  notes         String?
+  category      String   @default("daily")
+  order         Int
+  logs          SupplementLog[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model SupplementLog {
+  id            Int      @id @default(autoincrement())
+  supplementId  Int
+  supplement    Supplement @relation(fields: [supplementId], references: [id], onDelete: Cascade)
+  date          DateTime @default(now())
+  taken         Boolean  @default(false)
+  takenAt       DateTime?
+}
+
+model Habit {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  emoji       String?
+  color       String?
+  active      Boolean  @default(true)
+  order       Int
+  logs        HabitLog[]
+  createdAt   DateTime @default(now())
+}
+
+model HabitLog {
+  id          Int      @id @default(autoincrement())
+  habitId     Int
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  date        DateTime
+  done        Boolean  @default(false)
+  @@unique([habitId, date])
+}
+
+model FinanceEntry {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month       String
+  income      Float    @default(0)
+  expenses    Json?
+  allocations Json?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Debt {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  totalAmount Float
+  paidAmount  Float    @default(0)
+  monthlyPay  Float
+  dueDate     DateTime?
+  done        Boolean  @default(false)
+}
+
+model Resource {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic       String
+  name        String
+  url         String?
+  type        String?
+  order       Int
+  createdAt   DateTime @default(now())
+}
+
+model ChecklistItem {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  text        String
+  done        Boolean  @default(false)
+  category    String?
+  order       Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Setting {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  key         String
+  value       Json
+  @@unique([userId, key])
+}

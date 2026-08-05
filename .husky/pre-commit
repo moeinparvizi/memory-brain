@@ -1,0 +1,2 @@
+#!/usr/bin/env sh
+npx prettier --check "$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|scss|html|json|md)$' || true)"
