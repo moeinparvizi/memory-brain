@@ -2,12 +2,11 @@ import { Component, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { PersianDatePipe } from '../../pipes/persian-date.pipe';
-import { SearchComponent } from '../search/search.component';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [PersianDatePipe, SearchComponent],
+  imports: [PersianDatePipe],
   template: `
     <header class="header-glass px-4 lg:px-6 py-4">
       <div class="flex items-center justify-between">
@@ -27,7 +26,14 @@ import { SearchComponent } from '../search/search.component';
         </div>
 
         <div class="flex items-center gap-4">
-          <app-search></app-search>
+          <button
+            (click)="openSearch()"
+            class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:border-primary-500/30 hover:text-slate-300 transition-all text-sm"
+          >
+            <span>🔍</span>
+            <span class="hidden md:inline">جستجو...</span>
+            <kbd class="hidden md:inline text-[10px] bg-slate-700/50 px-1.5 py-0.5 rounded">⌘K</kbd>
+          </button>
           @if (currentActivity) {
             <div class="hidden md:flex activity-badge">
               <span class="activity-dot"></span>
@@ -110,6 +116,10 @@ export class HeaderComponent implements OnInit {
       this.currentDate = new Date();
       this.updateCurrentActivity();
     }, 60000);
+  }
+
+  openSearch() {
+    window.dispatchEvent(new Event('open-search'));
   }
 
   private updateCurrentActivity() {

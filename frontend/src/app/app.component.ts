@@ -3,18 +3,19 @@ import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
 import { SidebarComponent } from './shared/components/sidebar/sidebar.component';
 import { HeaderComponent } from './shared/components/header/header.component';
+import { SearchComponent } from './shared/components/search/search.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, SidebarComponent, HeaderComponent],
+  imports: [RouterOutlet, SidebarComponent, HeaderComponent, SearchComponent],
   template: `
     @if (!isLoginPage) {
       <div class="flex min-h-screen">
         <app-sidebar (toggle)="sidebarOpen = !sidebarOpen" [isOpen]="sidebarOpen"></app-sidebar>
         <div class="flex-1 flex flex-col min-h-screen mr-0 lg:mr-64">
           <app-header (toggleSidebar)="sidebarOpen = !sidebarOpen"></app-header>
-          <main class="flex-1 p-4 lg:p-6 animate-fade-in relative z-10">
+          <main class="flex-1 p-4 lg:p-6 animate-fade-in">
             <router-outlet></router-outlet>
           </main>
         </div>
@@ -22,6 +23,7 @@ import { HeaderComponent } from './shared/components/header/header.component';
     } @else {
       <router-outlet></router-outlet>
     }
+    <app-search></app-search>
   `,
   styles: [`
     :host {

@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, inject, signal, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
@@ -8,17 +8,6 @@ import { ApiService } from '../../../core/services/api.service';
   standalone: true,
   imports: [FormsModule],
   template: `
-    <div class="relative">
-      <button
-        (click)="openSearch()"
-        class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:border-primary-500/30 hover:text-slate-300 transition-all text-sm"
-      >
-        <span>🔍</span>
-        <span class="hidden md:inline">جستجو...</span>
-        <kbd class="hidden md:inline text-[10px] bg-slate-700/50 px-1.5 py-0.5 rounded">⌘K</kbd>
-      </button>
-    </div>
-
     @if (isOpen()) {
       <div class="search-overlay" (click)="close()">
         <div class="search-modal" (click)="$event.stopPropagation()">
@@ -133,6 +122,10 @@ export class SearchComponent {
   results = signal<any[]>([]);
   searching = signal(false);
   private searchTimeout: any;
+
+  constructor() {
+    window.addEventListener('open-search', () => this.openSearch());
+  }
 
   @HostListener('window:keydown', ['$event'])
   onKeydown(e: KeyboardEvent) {
