@@ -89,7 +89,7 @@ router.get('/daily', async (req, res, next) => {
 
     // Overall score
     const moodScores = { 'great': 3, 'good': 2, 'neutral': 1, 'needs-work': 0 };
-    const totalScore = sections.reduce((sum, s) => sum + (moodScores[s.mood as keyof typeof moodScores] || 0), 0);
+    const totalScore = sections.reduce((sum, s) => sum + (moodScores[s.mood] || 0), 0);
     const maxScore = sections.length * 3;
     const overallPct = sections.length > 0 ? Math.round((totalScore / maxScore) * 100) : 50;
 

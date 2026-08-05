@@ -15,13 +15,13 @@ router.get('/', async (req, res, next) => {
     const query = q.trim();
     const userId = req.userId;
 
-    const [phases, habits, timeSlots, supplements, financeEntries, financeDebts, resources, checklistItems, scheduleBlocks, workoutSessions] = await Promise.all([
+    const [phases, habits, timeSlots, supplements, financeEntries, debts, resources, checklistItems, scheduleBlocks, workoutSessions] = await Promise.all([
       prisma.phase.findMany({
-        where: { userId, OR: [{ title: { contains: query } }, { description: { contains: query } }] },
+        where: { userId, OR: [{ title: { contains: query } }, { goal: { contains: query } }] },
         include: { tasks: true },
       }),
       prisma.habit.findMany({
-        where: { userId, OR: [{ name: { contains: query } }, { description: { contains: query } }] },
+        where: { userId, OR: [{ name: { contains: query } }] },
       }),
       prisma.timeSlot.findMany({
         where: { userId, OR: [{ label: { contains: query } }] },
@@ -33,35 +33,42 @@ router.get('/', async (req, res, next) => {
       prisma.financeEntry.findMany({
         where: { userId, OR: [{ month: { contains: query } }, { notes: { contains: query } }] },
       }),
-      prisma.financeDebt.findMany({
-        where: { userId, OR: [{ person: { contains: query } }, { notes: { contains: query } }] },
-      }),
-      prisma.resource.findMany({
-        where: { userId, OR: [{ name: { contains: query } }, { description: { contains: query } }, { url: { contains: query } }] },
-      }),
-      prisma.checklistItem.findMany({
+      prisma.debt.findMany({
         where: { userId, OR: [{ title: { contains: query } }] },
       }),
+      prisma.resource.findMany({
+        where: { userId, OR: [{ name: { contains: query } }, { topic: { contains: query } }] },
+      }),
+      prisma.checklistItem.findMany({
+        where: { userId, OR: [{ text: { contains: query } }] },
+      }),
       prisma.scheduleBlock.findMany({
-        where: { userId, OR: [{ activity: { contains: query } }, { notes: { contains: query } }] },
+        where: { userId, OR: [{ activity: { contains: query } }] },
       }),
       prisma.workoutSession.findMany({
-        where: { userId, OR: [{ name: { contains: query } }, { notes: { contains: query } }] },
+        where: { userId, OR: [{ type: { contains: query } }, { day: { contains: query } }] },
       }),
     ]);
 
     const results = [];
 
-    phases.forEach(p => results.push({ type: 'phase', icon: '🗺️', label: p.title, detail: p.description || '', route: '/roadmap' }));
-    habits.forEach(h => results.push({ type: 'habit', icon: h.emoji || '✅', label: h.name, detail: h.description || '', route: '/habits' }));
+    phases.forEach(p => results.push({ type: 'phase', icon: '🗺️', label: p.title, detail: p.goal, route: '/roadmap' }));
+    phases.forEach(p => {
+      if (p.tasks) {
+        p.tasks.filter(t => t.topic.includes(query) || (t.notes && t.notes.includes(query))).forEach(t => {
+          results.push({ type: 'task', icon: t.done ? '✅' : '📝', label: t.topic, detail: `فاز: ${p.title}`, route: '/roadmap' });
+        });
+      }
+    });
+    habits.forEach(h => results.push({ type: 'habit', icon: h.emoji || '✅', label: h.name, detail: '', route: '/habits' }));
     timeSlots.forEach(s => results.push({ type: 'supplement-slot', icon: s.emoji || '💊', label: s.label, detail: s.time, route: '/supplements' }));
     supplements.forEach(s => results.push({ type: 'supplement', icon: '💊', label: s.name, detail: s.dose || '', route: '/supplements' }));
     financeEntries.forEach(e => results.push({ type: 'finance', icon: '💰', label: e.month, detail: e.notes || '', route: '/finance' }));
-    financeDebts.forEach(d => results.push({ type: 'debt', icon: '💸', label: `${d.person}: ${d.amount}`, detail: d.notes || '', route: '/finance' }));
-    resources.forEach(r => results.push({ type: 'resource', icon: '📚', label: r.name, detail: r.description || '', route: '/resources' }));
-    checklistItems.forEach(i => results.push({ type: 'checklist', icon: i.done ? '☑️' : '☐', label: i.title, detail: '', route: '/checklist' }));
+    debts.forEach(d => results.push({ type: 'debt', icon: '💸', label: d.title, detail: `${d.totalAmount} تومان`, route: '/finance' }));
+    resources.forEach(r => results.push({ type: 'resource', icon: '📚', label: r.name, detail: r.topic, route: '/resources' }));
+    checklistItems.forEach(i => results.push({ type: 'checklist', icon: i.done ? '☑️' : '☐', label: i.text, detail: '', route: '/checklist' }));
     scheduleBlocks.forEach(b => results.push({ type: 'schedule', icon: '📅', label: b.activity, detail: `${b.startTime}-${b.endTime}`, route: '/schedule' }));
-    workoutSessions.forEach(s => results.push({ type: 'workout', icon: '🏋️', label: s.name, detail: s.notes || '', route: '/workout' }));
+    workoutSessions.forEach(s => results.push({ type: 'workout', icon: '🏋️', label: s.type, detail: `${s.day} ${s.startTime}-${s.endTime}`, route: '/workout' }));
 
     res.json({ results: results.slice(0, 50) });
   } catch (err) {
