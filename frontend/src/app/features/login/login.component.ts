@@ -18,7 +18,7 @@ declare var google: any;
             <span class="text-3xl">🌌</span>
           </div>
           <h1 class="text-2xl font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
-            مموری مغر
+            مموری مغز
           </h1>
           <p class="text-slate-400 mt-2 text-sm">مدیریت زندگی شخصی</p>
         </div>

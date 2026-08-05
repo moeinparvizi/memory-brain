@@ -22,7 +22,7 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
             <div>
               <h1 class="text-lg font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
-                مموری مغر
+                مموری مغز
               </h1>
               <p class="text-xs text-slate-500">مدیریت زندگی</p>
             </div>
