@@ -1,4 +1,4 @@
-import { Component, inject, signal, HostListener } from '@angular/core';
+import { Component, inject, signal, HostListener, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api.service';
@@ -17,62 +17,111 @@ import { ApiService } from '../../../core/services/api.service';
         <span class="hidden md:inline">جستجو...</span>
         <kbd class="hidden md:inline text-[10px] bg-slate-700/50 px-1.5 py-0.5 rounded">⌘K</kbd>
       </button>
+    </div>
 
-      @if (isOpen()) {
-        <div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center pt-[10vh]" (click)="close()">
-          <div class="w-full max-w-lg mx-4" (click)="$event.stopPropagation()">
-            <div class="card p-0 overflow-hidden">
-              <!-- Search Input -->
-              <div class="flex items-center gap-3 px-4 py-3 border-b border-slate-700/50">
-                <span class="text-slate-400">🔍</span>
-                <input
-                  #searchInput
-                  type="text"
-                  [(ngModel)]="query"
-                  (input)="onSearch()"
-                  placeholder="جستجو در تمام بخش‌ها..."
-                  class="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
-                  autofocus
-                >
-                <button (click)="close()" class="text-slate-500 hover:text-slate-300 text-xs">ESC</button>
-              </div>
+    @if (isOpen()) {
+      <div class="search-overlay" (click)="close()">
+        <div class="search-modal" (click)="$event.stopPropagation()">
+          <div class="search-input-row">
+            <span class="text-slate-400">🔍</span>
+            <input
+              #searchInput
+              type="text"
+              [(ngModel)]="query"
+              (input)="onSearch()"
+              placeholder="جستجو در تمام بخش‌ها..."
+              class="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
+              autofocus
+            >
+            <button (click)="close()" class="text-slate-500 hover:text-slate-300 text-xs px-2 py-1 rounded bg-slate-800/50">ESC</button>
+          </div>
 
-              <!-- Results -->
-              <div class="max-h-80 overflow-y-auto">
-                @if (searching()) {
-                  <div class="p-4 text-center text-slate-500 text-sm">در حال جستجو...</div>
-                } @else if (results().length > 0) {
-                  <div class="py-2">
-                    @for (result of results(); track $index) {
-                      <button
-                        (click)="navigateTo(result.route)"
-                        class="flex items-center gap-3 w-full px-4 py-3 hover:bg-slate-800/50 transition-colors text-right"
-                      >
-                        <span class="text-lg">{{ result.icon }}</span>
-                        <div class="flex-1 min-w-0">
-                          <p class="text-sm text-white truncate">{{ result.label }}</p>
-                          @if (result.detail) {
-                            <p class="text-xs text-slate-500 truncate">{{ result.detail }}</p>
-                          }
-                        </div>
-                        <span class="text-[10px] text-slate-600">{{ getTypeLabel(result.type) }}</span>
-                      </button>
-                    }
-                  </div>
-                } @else if (query.length >= 2) {
-                  <div class="p-4 text-center text-slate-500 text-sm">نتیجه‌ای یافت نشد</div>
-                } @else {
-                  <div class="p-4 text-center text-slate-600 text-xs">حداقل ۲ حرف تایپ کنید</div>
+          <div class="search-results">
+            @if (searching()) {
+              <div class="p-4 text-center text-slate-500 text-sm">در حال جستجو...</div>
+            } @else if (results().length > 0) {
+              <div class="py-2">
+                @for (result of results(); track $index) {
+                  <button
+                    (click)="navigateTo(result.route)"
+                    class="search-result-item"
+                  >
+                    <span class="text-lg">{{ result.icon }}</span>
+                    <div class="flex-1 min-w-0 text-right">
+                      <p class="text-sm text-white truncate">{{ result.label }}</p>
+                      @if (result.detail) {
+                        <p class="text-xs text-slate-500 truncate">{{ result.detail }}</p>
+                      }
+                    </div>
+                    <span class="text-[10px] text-slate-500 bg-slate-800/50 px-2 py-1 rounded">{{ getTypeLabel(result.type) }}</span>
+                  </button>
                 }
               </div>
-            </div>
+            } @else if (query.length >= 2) {
+              <div class="p-4 text-center text-slate-500 text-sm">نتیجه‌ای یافت نشد</div>
+            } @else {
+              <div class="p-4 text-center text-slate-600 text-xs">حداقل ۲ حرف تایپ کنید</div>
+            }
           </div>
         </div>
-      }
-    </div>
+      </div>
+    }
   `,
   styles: [`
     :host { display: block; }
+
+    .search-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 9999;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 10vh;
+    }
+
+    .search-modal {
+      width: 100%;
+      max-width: 32rem;
+      margin: 0 1rem;
+      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      border-radius: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .search-input-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    }
+
+    .search-results {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .search-result-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 16px;
+      text-align: right;
+      transition: background 0.15s;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: inherit;
+    }
+
+    .search-result-item:hover {
+      background: rgba(139, 92, 246, 0.08);
+    }
   `]
 })
 export class SearchComponent {
@@ -132,6 +181,7 @@ export class SearchComponent {
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       'phase': 'نقشه راه',
+      'task': 'تسک',
       'habit': 'عادت',
       'supplement-slot': 'زمان‌بندی',
       'supplement': 'مکمل',
