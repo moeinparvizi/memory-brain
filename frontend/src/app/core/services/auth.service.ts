@@ -38,6 +38,19 @@ export class AuthService {
     );
   }
 
+  sendOtp(phone: string) {
+    return this.http.post<any>(`${environment.apiUrl}/auth/phone/send-otp`, { phone });
+  }
+
+  verifyOtp(phone: string, code: string) {
+    return this.http.post<any>(`${environment.apiUrl}/auth/phone/verify`, { phone, code }).pipe(
+      tap(response => {
+        this.setToken(response.token);
+        this.setUser(response.user);
+      })
+    );
+  }
+
   logout() {
     this.tokenSignal.set(null);
     this.userSignal.set(null);

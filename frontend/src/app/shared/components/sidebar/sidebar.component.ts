@@ -17,9 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- Logo -->
         <div class="p-6 border-b border-galaxy-border">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center glow">
-              <span class="text-xl">🌌</span>
-            </div>
+            <img src="assets/icons/logo.svg" alt="مموری مغز" class="w-10 h-10 rounded-xl">
             <div>
               <h1 class="text-lg font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
                 مموری مغز
