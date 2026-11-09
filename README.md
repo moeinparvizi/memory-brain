@@ -122,7 +122,9 @@ The frontend production build is written to `frontend/dist/moein-dashboard/brows
 
 ## Online deployment
 
-The GitHub Pages address for this repository is **https://moeinparvizi.github.io/memory-brain/**. It becomes a functioning personal app after the API and database are configured and the Pages workflow succeeds. Sign in with the private hosting credentials; there is no shared demo account.
+**Live personal app: https://moeinparvizi.github.io/memory-brain/**
+
+API: **https://memory-brain-api.onrender.com/api/v1**. The hosted API uses Prisma Postgres in Frankfurt. Sign in with the private hosting credentials; there is no shared demo account.
 
 1. Create a **Free** PostgreSQL database with a managed provider (the personal deployment uses Prisma Postgres in Frankfurt). Keep the connection string private. Use TLS (`sslmode=require`) and an appropriate pooled endpoint where the provider recommends it.
 2. Create a **Free** Render Node web service using `render.yaml`, or select root directory `backend`, build command `npm ci --include=dev && npx prisma generate`, start command `npx prisma db push --skip-generate && npm start`, Node 22, and health path `/api/v1/health`.
@@ -131,6 +133,8 @@ The GitHub Pages address for this repository is **https://moeinparvizi.github.io
 5. Push to `main` or run the Pages workflow. The published app uses hash routes under `/memory-brain/`, so refreshing a screen works on static hosting. Runtime API configuration is generated into the build artifact; local development keeps its existing proxy.
 
 Google sign-in is hidden in the hosted build unless the public repository variable `PUBLIC_GOOGLE_CLIENT_ID` is set. Configure the same client on the backend, set `AUTH_ALLOWED_GOOGLE_EMAIL` to your own verified Google email, and register the frontend origin with Google before enabling it. Phone sign-in is disabled in the Pages deployment by default; enabling it requires a real SMS provider and `AUTH_ALLOWED_PHONE` on the backend, plus explicit frontend runtime configuration. Private username/password sign-in remains available.
+
+The current Render service uses the public repository URL. For later backend changes, use **Render → memory-brain-api → Manual Deploy → Deploy latest commit**; automatic Render deploys for public URL repositories require a Blueprint or an authorized Git provider connection. Frontend changes deploy automatically through GitHub Actions.
 
 Render Free services sleep after inactivity, so the first API call can take longer. Database providers have their own storage/activity quotas. The Render Free database expires after 30 days and is not used by this configuration. No paid plan is required by `render.yaml`.
 
