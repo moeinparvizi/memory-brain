@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 router.use(auth);
+router.use(require('../middleware/ownership')('supplements'));
 
 router.get('/timeslots', async (req, res, next) => {
   try {
@@ -63,7 +64,7 @@ router.delete('/timeslots/:id', async (req, res, next) => {
 router.get('/', async (req, res, next) => {
   try {
     const { timeSlotId } = req.query;
-    const where = timeSlotId ? { timeSlotId: parseInt(timeSlotId) } : {};
+    const where = { timeSlot: { userId: req.userId }, ...(timeSlotId ? { timeSlotId: parseInt(timeSlotId) } : {}) };
     const supplements = await prisma.supplement.findMany({
       where,
       orderBy: { order: 'asc' },
@@ -177,7 +178,7 @@ router.get('/stats', async (req, res, next) => {
     const totalExpected = allSupplements.length * 7;
 
     const logs = await prisma.supplementLog.findMany({
-      where: { date: { gte: weekStart, lt: weekEnd }, taken: true },
+      where: { supplement: { timeSlot: { userId: req.userId } }, date: { gte: weekStart, lt: weekEnd }, taken: true },
     });
 
     const percentage = totalExpected > 0 ? Math.round((logs.length / totalExpected) * 100) : 0;

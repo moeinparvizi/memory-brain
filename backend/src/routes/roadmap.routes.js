@@ -6,6 +6,7 @@ const phaseProgress = require('../utils/phase-progress');
 const router = express.Router();
 
 router.use(auth);
+router.use(require('../middleware/ownership')('roadmap'));
 
 // ─── PHASES ───
 

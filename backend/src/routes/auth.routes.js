@@ -2,8 +2,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 const prisma = require('../config/db');
+const rateLimit = require('express-rate-limit');
+const appSession = require('../services/app-session');
 
 const router = express.Router();
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60, standardHeaders: true, legacyHeaders: false });
+router.use(['/login', '/firebase', '/google', '/phone/send-otp', '/phone/verify-otp'], authLimiter);
+router.use(require('./public-auth.routes')());
 
 // ─── Phone OTP Helpers ───
 
@@ -169,16 +174,7 @@ router.post('/refresh', async (req, res, next) => {
       return res.status(401).json({ error: 'User not found' });
     }
 
-    const newToken = jwt.sign(
-      { userId: user.id, email: user.email, name: user.name },
-      process.env.JWT_SECRET,
-      { expiresIn: '365d' }
-    );
-
-    res.json({
-      token: newToken,
-      user: { id: user.id, email: user.email, name: user.name, avatar: user.avatar },
-    });
+    res.json(appSession(user));
   } catch (err) {
     next(err);
   }

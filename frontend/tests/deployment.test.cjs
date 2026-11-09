@@ -41,3 +41,17 @@ test('the Angular runtime reads the deployed API and leaves local development on
     assert.equal(context.exports.runtimeConfig.useHashRouting, !!config.useHashRouting);
   }
 });
+
+test('Pages publishes only complete public Firebase web configuration', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'memory-firebase-'));
+  try {
+    for (const complete of [false, true]) {
+      const output = path.join(dir, 'runtime-config.js');
+      execFileSync(process.execPath, [script, output], { env: {...process.env, API_BASE_URL: 'https://memory-api.onrender.com/api/v1', PUBLIC_FIREBASE_API_KEY: 'public-key', PUBLIC_FIREBASE_AUTH_DOMAIN: 'memory.firebaseapp.com', PUBLIC_FIREBASE_PROJECT_ID: 'memory', PUBLIC_FIREBASE_APP_ID: complete ? 'public-app' : ''} });
+      const context = {window: {}}; vm.runInNewContext(readFileSync(output, 'utf8'), context);
+      const firebase = context.window.__MEMORY_BRAIN_CONFIG__.firebase;
+      if (complete) {assert.equal(firebase.projectId, 'memory'); assert.equal(firebase.apiKey, 'public-key');}
+      else assert.equal(firebase, undefined);
+    }
+  } finally {rmSync(dir, {recursive: true, force: true});}
+});

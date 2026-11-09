@@ -20,6 +20,8 @@ const searchRoutes = require('./routes/search.routes');
 const summaryRoutes = require('./routes/summary.routes');
 
 const app = express();
+// Render terminates TLS at one trusted proxy; use the client IP for login limits.
+if (process.env.TRUST_PROXY === '1') app.set('trust proxy', 1);
 
 app.use(cors({ origin: process.env.CORS_ORIGIN, credentials: true }));
 app.use(express.json({ limit: '10mb' }));

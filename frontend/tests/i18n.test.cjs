@@ -103,6 +103,7 @@ test('login translates real invalid OTP and credential responses in either langu
   const {service} = locale('en');
   const login = runInInjectionContext(Injector.create({providers: [
     {provide: loadTs('../src/app/core/services/locale.service.ts').LocaleService, useValue: service},
+    {provide: loadTs('../src/app/core/services/firebase-auth.service.ts').FirebaseAuthService, useValue: {available: false}},
     {provide: AuthService, useValue: {
       verifyOtp: () => throwError(() => ({error: {error: 'کد تایید نامعتبر یا منقضی شده است'}})),
       login: () => throwError(() => ({error: {error: 'Invalid credentials'}}))

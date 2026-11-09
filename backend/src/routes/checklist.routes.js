@@ -5,6 +5,7 @@ const auth = require('../middleware/auth');
 const router = express.Router();
 
 router.use(auth);
+router.use(require('../middleware/ownership')('checklist'));
 
 router.get('/', async (req, res, next) => {
   try {

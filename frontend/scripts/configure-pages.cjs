@@ -9,7 +9,13 @@ try {
   console.error('API_BASE_URL must be an HTTPS API URL ending in /api/v1, without credentials, query parameters, or fragments.');
   process.exit(1);
 }
-const config = { apiUrl: api.href.replace(/\/$/, ''), useHashRouting: true, googleClientId: process.env.PUBLIC_GOOGLE_CLIENT_ID || '', phoneLoginEnabled: false };
+const firebase = {
+  apiKey: process.env.PUBLIC_FIREBASE_API_KEY || '',
+  authDomain: process.env.PUBLIC_FIREBASE_AUTH_DOMAIN || '',
+  projectId: process.env.PUBLIC_FIREBASE_PROJECT_ID || '',
+  appId: process.env.PUBLIC_FIREBASE_APP_ID || '',
+};
+const config = { apiUrl: api.href.replace(/\/$/, ''), useHashRouting: true, firebase: Object.values(firebase).every(Boolean) ? firebase : undefined, googleClientId: process.env.PUBLIC_GOOGLE_CLIENT_ID || '', phoneLoginEnabled: false };
 const output = process.argv[2] || path.join(__dirname, '../dist/moein-dashboard/browser/runtime-config.js');
 writeFileSync(output, `window.__MEMORY_BRAIN_CONFIG__ = ${JSON.stringify(config)};\n`);
 console.log('Public Pages API configuration generated.');

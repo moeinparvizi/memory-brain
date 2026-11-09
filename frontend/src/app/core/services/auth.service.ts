@@ -29,8 +29,8 @@ export class AuthService {
     );
   }
 
-  googleLogin(credential: string) {
-    return this.http.post<any>(`${environment.apiUrl}/auth/google`, { credential }).pipe(
+  firebaseLogin(idToken: string) {
+    return this.http.post<any>(`${environment.apiUrl}/auth/firebase`, { idToken }).pipe(
       tap(response => {
         this.setToken(response.token);
         this.setUser(response.user);

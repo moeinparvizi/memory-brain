@@ -7,13 +7,15 @@ services:
     region: frankfurt
     rootDir: backend
     buildCommand: npm ci --include=dev && npx prisma generate
-    startCommand: npx prisma db push --skip-generate && npm start
+    startCommand: node scripts/prepare-auth-schema.cjs && npx prisma db push --skip-generate && npm start
     healthCheckPath: /api/v1/health
     envVars:
       - key: NODE_VERSION
         value: 22
       - key: NODE_ENV
         value: production
+      - key: TRUST_PROXY
+        value: "1"
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET
@@ -24,3 +26,7 @@ services:
         sync: false
       - key: AUTH_PASSWORD
         sync: false
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: DEMO_LOGIN_ENABLED
+        value: "true"

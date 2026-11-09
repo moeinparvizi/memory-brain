@@ -10,6 +10,7 @@ datasource db {
 model User {
   id            Int       @id @default(autoincrement())
   googleId      String?   @unique
+  firebaseUid   String?   @unique
   phone         String?   @unique
   email         String?   @unique
   name          String
