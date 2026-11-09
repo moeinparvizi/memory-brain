@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -12,9 +13,9 @@ import { Resource } from '../../shared/models/resource.model';
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">منابع</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('منابع') }}</h2>
         <button (click)="showModal.set(true)" class="btn-primary">
-          + منبع جدید
+          {{ i18n.t('+ منبع جدید') }}
         </button>
       </div>
 
@@ -23,36 +24,36 @@ import { Resource } from '../../shared/models/resource.model';
           (click)="filterType.set(null)"
           [class]="filterType() === null ? 'btn-primary' : 'btn-ghost'"
         >
-          همه
+          {{ i18n.t('همه') }}
         </button>
         <button
           (click)="filterType.set('book')"
           [class]="filterType() === 'book' ? 'btn-primary' : 'btn-ghost'"
         >
-          📖 کتاب
+          {{ i18n.t('📖 کتاب') }}
         </button>
         <button
           (click)="filterType.set('course')"
           [class]="filterType() === 'course' ? 'btn-primary' : 'btn-ghost'"
         >
-          🎓 دوره
+          {{ i18n.t('🎓 دوره') }}
         </button>
         <button
           (click)="filterType.set('website')"
           [class]="filterType() === 'website' ? 'btn-primary' : 'btn-ghost'"
         >
-          🌐 وبسایت
+          {{ i18n.t('🌐 وبسایت') }}
         </button>
         <button
           (click)="filterType.set('youtube')"
           [class]="filterType() === 'youtube' ? 'btn-primary' : 'btn-ghost'"
         >
-          🎬 یوتیوب
+          {{ i18n.t('🎬 یوتیوب') }}
         </button>
       </div>
 
       @if (filteredResources().length === 0) {
-        <app-empty-state message="منبعی ثبت نشده" icon="📚"></app-empty-state>
+        <app-empty-state [message]="i18n.t('منبعی ثبت نشده')" icon="📚"></app-empty-state>
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (resource of filteredResources(); track resource.id) {
@@ -71,7 +72,7 @@ import { Resource } from '../../shared/models/resource.model';
                       target="_blank"
                       class="text-sm text-primary-400 hover:text-primary-300 mt-2 inline-block"
                     >
-                      🔗 مشاهده لینک
+                      {{ i18n.t('🔗 مشاهده لینک') }}
                     </a>
                   }
                 </div>
@@ -88,32 +89,32 @@ import { Resource } from '../../shared/models/resource.model';
       @if (showModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up">
-            <h3 class="text-lg font-semibold mb-4">{{ editingResource() ? 'ویرایش منبع' : 'منبع جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingResource() ? i18n.t('ویرایش منبع') : i18n.t('منبع جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">نام</label>
-                <input [(ngModel)]="form.name" class="input-field" placeholder="نام منبع">
+                <label class="label">{{ i18n.t('نام') }}</label>
+                <input [(ngModel)]="form.name" class="input-field" [placeholder]="i18n.t('نام منبع')">
               </div>
               <div>
-                <label class="label">موضوع</label>
-                <input [(ngModel)]="form.topic" class="input-field" placeholder="موضوع">
+                <label class="label">{{ i18n.t('موضوع') }}</label>
+                <input [(ngModel)]="form.topic" class="input-field" [placeholder]="i18n.t('موضوع')">
               </div>
               <div>
-                <label class="label">نوع</label>
+                <label class="label">{{ i18n.t('نوع') }}</label>
                 <select [(ngModel)]="form.type" class="select-field">
-                  <option value="book">کتاب</option>
-                  <option value="course">دوره</option>
-                  <option value="website">وبسایت</option>
-                  <option value="youtube">یوتیوب</option>
+                  <option value="book">{{ i18n.t('کتاب') }}</option>
+                  <option value="course">{{ i18n.t('دوره') }}</option>
+                  <option value="website">{{ i18n.t('وبسایت') }}</option>
+                  <option value="youtube">{{ i18n.t('یوتیوب') }}</option>
                 </select>
               </div>
               <div>
-                <label class="label">لینک</label>
+                <label class="label">{{ i18n.t('لینک') }}</label>
                 <input [(ngModel)]="form.url" class="input-field" placeholder="https://...">
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeModal()" class="btn-secondary">لغو</button>
-                <button (click)="save()" class="btn-primary">ذخیره</button>
+                <button (click)="closeModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="save()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -122,7 +123,7 @@ import { Resource } from '../../shared/models/resource.model';
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف این منبع مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف این منبع مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -136,6 +137,7 @@ import { Resource } from '../../shared/models/resource.model';
   `]
 })
 export class ResourcesComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   resources = signal<Resource[]>([]);
@@ -232,11 +234,11 @@ export class ResourcesComponent implements OnInit {
 
   getTypeText(type: string | null): string {
     switch (type) {
-      case 'book': return 'کتاب';
-      case 'course': return 'دوره';
-      case 'website': return 'وبسایت';
-      case 'youtube': return 'یوتیوب';
-      default: return 'نامشخص';
+      case 'book': return this.i18n.t('کتاب');
+      case 'course': return this.i18n.t('دوره');
+      case 'website': return this.i18n.t('وبسایت');
+      case 'youtube': return this.i18n.t('یوتیوب');
+      default: return this.i18n.t('نامشخص');
     }
   }
 }

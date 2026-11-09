@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -12,28 +13,28 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">مکمل‌ها</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('مکمل‌ها') }}</h2>
         <div class="flex gap-2">
           <button (click)="showSlotModal.set(true)" class="btn-secondary">
-            + زمان‌بندی
+            {{ i18n.t('+ زمان‌بندی') }}
           </button>
           <button (click)="showSupplementModal.set(true)" class="btn-primary">
-            + مکمل جدید
+            {{ i18n.t('+ مکمل جدید') }}
           </button>
         </div>
       </div>
 
       <div class="card bg-blue-500/10 border-blue-500/30">
-        <h3 class="font-medium mb-2">آمار هفتگی</h3>
+        <h3 class="font-medium mb-2">{{ i18n.t('آمار هفتگی') }}</h3>
         <div class="flex gap-4 text-sm">
-          <span>مصرف شده: <strong class="text-green-400">{{ weeklyTaken }}</strong></span>
-          <span>کل: <strong class="text-blue-400">{{ weeklyTotal }}</strong></span>
-          <span>درصد: <strong class="text-primary-400">{{ weeklyPercentage }}%</strong></span>
+          <span>{{ i18n.t('مصرف شده:') }} <strong class="text-green-400">{{ i18n.number(weeklyTaken) }}</strong></span>
+          <span>{{ i18n.t('کل:') }} <strong class="text-blue-400">{{ i18n.number(weeklyTotal) }}</strong></span>
+          <span>{{ i18n.t('درصد:') }} <strong class="text-primary-400">{{ i18n.number(weeklyPercentage) }}%</strong></span>
         </div>
       </div>
 
       @if (timeSlots().length === 0) {
-        <app-empty-state message="زمان‌بندی مکملی ثبت نشده" icon="💊"></app-empty-state>
+        <app-empty-state [message]="i18n.t('زمان‌بندی مکملی ثبت نشده')" icon="💊"></app-empty-state>
       } @else {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           @for (slot of timeSlots(); track slot.id) {
@@ -76,7 +77,7 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
                   </div>
                 }
                 @if (slot.supplements.length === 0) {
-                  <p class="text-sm text-slate-500 text-center py-2">مکملی اضافه نشده</p>
+                  <p class="text-sm text-slate-500 text-center py-2">{{ i18n.t('مکملی اضافه نشده') }}</p>
                 }
               </div>
             </div>
@@ -87,23 +88,23 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
       @if (showSlotModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up">
-            <h3 class="text-lg font-semibold mb-4">{{ editingSlot() ? 'ویرایش زمان‌بندی' : 'زمان‌بندی جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingSlot() ? i18n.t('ویرایش زمان‌بندی') : i18n.t('زمان‌بندی جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">عنوان</label>
-                <input [(ngModel)]="slotForm.label" class="input-field" placeholder="مثال: صبح">
+                <label class="label">{{ i18n.t('عنوان') }}</label>
+                <input [(ngModel)]="slotForm.label" class="input-field" [placeholder]="i18n.t('مثال: صبح')">
               </div>
               <div>
-                <label class="label">زمان</label>
-                <input [(ngModel)]="slotForm.time" class="input-field" placeholder="مثال: 8:00">
+                <label class="label">{{ i18n.t('زمان') }}</label>
+                <input [(ngModel)]="slotForm.time" class="input-field" [placeholder]="i18n.t('مثال: 8:00')">
               </div>
               <div>
-                <label class="label">ایموجی</label>
+                <label class="label">{{ i18n.t('ایموجی') }}</label>
                 <input [(ngModel)]="slotForm.emoji" class="input-field" placeholder="☀️">
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeSlotModal()" class="btn-secondary">لغو</button>
-                <button (click)="saveSlot()" class="btn-primary">ذخیره</button>
+                <button (click)="closeSlotModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="saveSlot()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -113,10 +114,10 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
       @if (showSupplementModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up">
-            <h3 class="text-lg font-semibold mb-4">{{ editingSupplement() ? 'ویرایش مکمل' : 'مکمل جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingSupplement() ? i18n.t('ویرایش مکمل') : i18n.t('مکمل جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">زمان‌بندی</label>
+                <label class="label">{{ i18n.t('زمان‌بندی') }}</label>
                 <select [(ngModel)]="supplementForm.timeSlotId" class="select-field">
                   @for (slot of timeSlots(); track slot.id) {
                     <option [value]="slot.id">{{ slot.label }}</option>
@@ -124,24 +125,24 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
                 </select>
               </div>
               <div>
-                <label class="label">نام</label>
-                <input [(ngModel)]="supplementForm.name" class="input-field" placeholder="نام مکمل">
+                <label class="label">{{ i18n.t('نام') }}</label>
+                <input [(ngModel)]="supplementForm.name" class="input-field" [placeholder]="i18n.t('نام مکمل')">
               </div>
               <div>
-                <label class="label">دوز</label>
-                <input [(ngModel)]="supplementForm.dose" class="input-field" placeholder="مثال: 500mg">
+                <label class="label">{{ i18n.t('دوز') }}</label>
+                <input [(ngModel)]="supplementForm.dose" class="input-field" [placeholder]="i18n.t('مثال: 500mg')">
               </div>
               <div>
-                <label class="label">دسته‌بندی</label>
+                <label class="label">{{ i18n.t('دسته‌بندی') }}</label>
                 <select [(ngModel)]="supplementForm.category" class="select-field">
-                  <option value="daily">روزانه</option>
-                  <option value="workout">ورزشی</option>
-                  <option value="optional">اختیاری</option>
+                  <option value="daily">{{ i18n.t('روزانه') }}</option>
+                  <option value="workout">{{ i18n.t('ورزشی') }}</option>
+                  <option value="optional">{{ i18n.t('اختیاری') }}</option>
                 </select>
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeSupplementModal()" class="btn-secondary">لغو</button>
-                <button (click)="saveSupplement()" class="btn-primary">ذخیره</button>
+                <button (click)="closeSupplementModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="saveSupplement()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -150,7 +151,7 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -164,6 +165,7 @@ import { TimeSlot, Supplement, SupplementLog } from '../../shared/models/supplem
   `]
 })
 export class SupplementsComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   timeSlots = signal<TimeSlot[]>([]);

@@ -1,4 +1,7 @@
-import { Component, inject, signal, OnInit, NgZone, ElementRef, ViewChild } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { LocaleService } from '../../core/services/locale.service';
+import { LanguageSwitcherComponent } from '../../shared/components/language-switcher.component';
+import { Component, inject, signal, OnInit, OnDestroy, NgZone, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
@@ -9,27 +12,28 @@ declare var google: any;
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, LanguageSwitcherComponent],
   template: `
     <div class="min-h-screen flex items-center justify-center">
       <div class="card max-w-md w-full mx-4 p-8 animate-slide-up">
+        <div class="mb-6"><app-language-switcher></app-language-switcher></div>
         <!-- Demo credentials banner -->
-        <div class="absolute top-0 left-0 right-0 bg-galaxy-primary/10 border-b border-galaxy-border px-6 py-2 z-10">
+        <div class="bg-galaxy-primary/10 border border-galaxy-border rounded-xl px-4 py-3 mb-6">
           <div class="flex items-center gap-2 text-xs text-galaxy-primary font-medium">
             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>Demo mode</span>
+            <span>{{ i18n.t('حالت نمایشی') }}</span>
           </div>
           <div class="mt-1 text-xs text-slate-500 font-mono">
-            Username: <span class="text-galaxy-primary">demo</span>&nbsp;|&nbsp;Password: <span class="text-galaxy-primary">demo123</span>
+            {{ i18n.t('نام کاربری:') }} <span class="text-galaxy-primary">demo</span>&nbsp;|&nbsp;{{ i18n.t('رمز عبور:') }} <span class="text-galaxy-primary">demo123</span>
           </div>
         </div>
 
         <div class="text-center mb-8 pt-4">
           <img src="assets/icons/logo.svg" alt="Memory Brain" class="w-16 h-16 mx-auto mb-4 rounded-2xl">
           <h1 class="text-2xl font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
-            Memory Brain
+            {{ i18n.t('مموری مغز') }}
           </h1>
-          <p class="text-slate-400 mt-2 text-sm">Personal life dashboard</p>
+          <p class="text-slate-400 mt-2 text-sm">{{ i18n.t('داشبورد زندگی شخصی') }}</p>
         </div>
 
         <div class="space-y-4">
@@ -37,12 +41,12 @@ declare var google: any;
           <div #googleBtn class="flex justify-center min-h-[44px]"></div>
 
           @if (error()) {
-            <p class="text-red-400 text-sm text-center">{{ error() }}</p>
+            <p class="text-red-400 text-sm text-center">{{ i18n.t(error()!) }}</p>
           }
 
           @if (loading()) {
             <p class="text-primary-400 text-sm text-center flex items-center justify-center gap-2">
-              <span class="animate-spin">⏳</span> Signing in...
+              <span class="animate-spin">⏳</span> {{ i18n.t('در حال ورود...') }}
             </p>
           }
 
@@ -51,26 +55,26 @@ declare var google: any;
               <div class="w-full border-t border-galaxy-border"></div>
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-4 bg-galaxy-card text-slate-400">Or</span>
+              <span class="px-4 bg-galaxy-card text-slate-400">{{ i18n.t('یا') }}</span>
             </div>
           </div>
 
           <!-- Username / Password Login -->
           <form (ngSubmit)="login()" class="space-y-4" #loginForm="ngForm">
             <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">Username</label>
+              <label class="block text-xs font-medium text-slate-300 mb-1">{{ i18n.t('نام کاربری') }}</label>
               <input
                 [(ngModel)]="username"
                 name="username"
                 type="text"
                 class="input-field"
-                placeholder="e.g. demo"
+                [placeholder]="i18n.t('مثال: demo')"
                 required
               >
             </div>
 
             <div>
-              <label class="block text-xs font-medium text-slate-300 mb-1">Password</label>
+              <label class="block text-xs font-medium text-slate-300 mb-1">{{ i18n.t('رمز عبور') }}</label>
               <input
                 [(ngModel)]="password"
                 name="password"
@@ -86,7 +90,7 @@ declare var google: any;
               class="btn-primary w-full"
               [disabled]="loading()"
             >
-              Sign in
+              {{ i18n.t('ورود') }}
             </button>
           </form>
 
@@ -95,7 +99,7 @@ declare var google: any;
               <div class="w-full border-t border-galaxy-border"></div>
             </div>
             <div class="relative flex justify-center text-sm">
-              <span class="px-4 bg-galaxy-card text-slate-400">Or continue with</span>
+              <span class="px-4 bg-galaxy-card text-slate-400">{{ i18n.t('یا ادامه با') }}</span>
             </div>
           </div>
 
@@ -103,13 +107,13 @@ declare var google: any;
           @if (!otpSent()) {
             <form (ngSubmit)="sendOtp()" class="space-y-4" #otpForm="ngForm">
               <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1">Phone number</label>
+                <label class="block text-xs font-medium text-slate-300 mb-1">{{ i18n.t('شماره تلفن') }}</label>
                 <input
                   [(ngModel)]="phone"
                   name="phone"
                   type="tel"
                   class="input-field"
-                  placeholder="e.g. +989121234567"
+                  [placeholder]="i18n.t('مثال: +989121234567')"
                   required
                   dir="ltr"
                 >
@@ -120,18 +124,18 @@ declare var google: any;
                 class="btn-secondary w-full"
                 [disabled]="loading()"
               >
-                Send verification code
+                {{ i18n.t('ارسال کد تأیید') }}
               </button>
             </form>
           } @else {
             <form (ngSubmit)="verifyOtp()" class="space-y-4">
               <div class="text-center">
-                <p class="text-sm text-slate-400">Verification code sent to:</p>
+                <p class="text-sm text-slate-400">{{ i18n.t('کد تأیید ارسال شد به:') }}</p>
                 <p class="text-primary-400 font-mono" dir="ltr">{{ phone }}</p>
               </div>
 
               <div>
-                <label class="block text-xs font-medium text-slate-300 mb-1">Code</label>
+                <label class="block text-xs font-medium text-slate-300 mb-1">{{ i18n.t('کد') }}</label>
                 <input
                   [(ngModel)]="otpCode"
                   name="otpCode"
@@ -150,7 +154,7 @@ declare var google: any;
                 class="btn-secondary w-full"
                 [disabled]="loading()"
               >
-                Verify & sign in
+                {{ i18n.t('تأیید و ورود') }}
               </button>
 
               <button
@@ -158,13 +162,13 @@ declare var google: any;
                 (click)="resetOtp()"
                 class="w-full text-sm text-slate-400 hover:text-slate-300 transition-colors"
               >
-                Change phone number
+                {{ i18n.t('تغییر شماره تلفن') }}
               </button>
             </form>
           }
 
           <p class="text-xs text-center text-slate-500 mt-4">
-            Don't have an account? <span class="text-galaxy-primary cursor-pointer hover:underline">Sign up</span>
+            {{ i18n.t('حساب کاربری ندارید؟') }} <span class="text-galaxy-primary cursor-pointer hover:underline">{{ i18n.t('ثبت‌نام') }}</span>
           </p>
         </div>
       </div>
@@ -174,7 +178,8 @@ declare var google: any;
     :host { display: block; }
   `]
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, OnDestroy {
+  i18n = inject(LocaleService);
   @ViewChild('googleBtn') googleBtn!: ElementRef;
 
   private authService = inject(AuthService);
@@ -190,7 +195,17 @@ export class LoginComponent implements OnInit {
   otpSent = signal(false);
   googleClientId = environment.googleClientId;
 
+  private languageSubscription?: Subscription;
+
+  ngOnDestroy() { this.languageSubscription?.unsubscribe(); }
+
   ngOnInit() {
+    this.languageSubscription = this.i18n.languageChanges.subscribe(() => {
+      if (typeof google !== 'undefined' && this.googleBtn) {
+        this.googleBtn.nativeElement.replaceChildren();
+        this.renderGoogleButton();
+      }
+    });
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['/dashboard']);
       return;
@@ -201,7 +216,7 @@ export class LoginComponent implements OnInit {
 
   login() {
     if (!this.username || !this.password) {
-      this.error.set('Please enter username and password');
+      this.error.set('نام کاربری و رمز عبور را وارد کنید');
       return;
     }
 
@@ -215,7 +230,7 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.error || 'Invalid username or password');
+        this.showAuthError(err, 'نام کاربری یا رمز عبور نادرست است');
       },
     });
   }
@@ -261,7 +276,8 @@ export class LoginComponent implements OnInit {
         text: 'sign_in_with',
         shape: 'rectangular',
         logo_alignment: 'left',
-        width: 300,
+        width: 280,
+        locale: this.i18n.language(),
       });
     }
   }
@@ -276,14 +292,14 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set('Error signing in with Google');
+        this.error.set('ورود با گوگل انجام نشد');
       }
     });
   }
 
   sendOtp() {
     if (!this.phone) {
-      this.error.set('Please enter your phone number');
+      this.error.set('شماره تلفن خود را وارد کنید');
       return;
     }
 
@@ -297,14 +313,14 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.error || 'Failed to send verification code');
+        this.showAuthError(err, 'ارسال کد تأیید انجام نشد');
       }
     });
   }
 
   verifyOtp() {
     if (!this.otpCode || this.otpCode.length !== 6) {
-      this.error.set('Please enter the 6-digit verification code');
+      this.error.set('کد تأیید ۶ رقمی را وارد کنید');
       return;
     }
 
@@ -317,9 +333,19 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err.error?.error || 'Invalid verification code');
+        this.showAuthError(err, 'کد تأیید نادرست است');
       }
     });
+  }
+
+  private showAuthError(error: any, fallback: string) {
+    const messages: Record<string, string> = {
+      'Invalid credentials': 'نام کاربری یا رمز عبور نادرست است',
+      'شماره موبایل الزامی است': 'شماره تلفن خود را وارد کنید',
+      'شماره موبایل و کد تایید الزامی است': 'شماره تلفن و کد تأیید را وارد کنید',
+      'کد تایید نامعتبر یا منقضی شده است': 'کد تأیید نامعتبر یا منقضی شده است',
+    };
+    this.error.set(messages[error.error?.error] || fallback);
   }
 
   resetOtp() {

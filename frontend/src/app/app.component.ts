@@ -13,7 +13,7 @@ import { SearchComponent } from './shared/components/search/search.component';
     @if (!isLoginPage) {
       <div class="flex min-h-screen">
         <app-sidebar (toggle)="sidebarOpen = !sidebarOpen" [isOpen]="sidebarOpen"></app-sidebar>
-        <div class="flex-1 flex flex-col min-h-screen mr-0 lg:mr-64">
+        <div class="flex-1 min-w-0 flex flex-col min-h-screen ms-0 lg:ms-64">
           <app-header (toggleSidebar)="sidebarOpen = !sidebarOpen"></app-header>
           <main class="flex-1 p-4 lg:p-6 animate-fade-in">
             <router-outlet></router-outlet>

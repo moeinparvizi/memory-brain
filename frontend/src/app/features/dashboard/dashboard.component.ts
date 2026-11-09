@@ -1,5 +1,6 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { DecimalPipe } from '@angular/common';
+import { Subscription } from 'rxjs';
+import { LocaleService } from '../../core/services/locale.service';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { ApiService } from '../../core/services/api.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
@@ -13,7 +14,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [EmptyStateComponent, HeatmapComponent, DecimalPipe],
+  imports: [EmptyStateComponent, HeatmapComponent],
   template: `
     <div class="space-y-6">
       <!-- Stats Cards -->
@@ -22,8 +23,8 @@ import { WorkoutLog } from '../../shared/models/workout.model';
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-primary-500/15 flex items-center justify-center text-2xl">🗺️</div>
             <div>
-              <p class="text-slate-400 text-xs">نقشه راه</p>
-              <p class="text-xl font-bold text-primary-400">{{ currentPhase()?.title || 'ندارد' }}</p>
+              <p class="text-slate-400 text-xs">{{ i18n.t('نقشه راه') }}</p>
+              <p class="text-xl font-bold text-primary-400">{{ currentPhase()?.title || i18n.t('ندارد') }}</p>
             </div>
           </div>
         </div>
@@ -32,8 +33,8 @@ import { WorkoutLog } from '../../shared/models/workout.model';
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-green-500/15 flex items-center justify-center text-2xl">✅</div>
             <div>
-              <p class="text-slate-400 text-xs">عادت‌ها</p>
-              <p class="text-xl font-bold text-green-400">{{ completedHabits() }}/{{ totalHabits() }}</p>
+              <p class="text-slate-400 text-xs">{{ i18n.t('عادت‌ها') }}</p>
+              <p class="text-xl font-bold text-green-400">{{ i18n.number(completedHabits()) }}/{{ i18n.number(totalHabits()) }}</p>
             </div>
           </div>
         </div>
@@ -42,8 +43,8 @@ import { WorkoutLog } from '../../shared/models/workout.model';
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-blue-500/15 flex items-center justify-center text-2xl">💊</div>
             <div>
-              <p class="text-slate-400 text-xs">مکمل‌ها</p>
-              <p class="text-xl font-bold text-blue-400">{{ takenSupplements() }}/{{ totalSupplements() }}</p>
+              <p class="text-slate-400 text-xs">{{ i18n.t('مکمل‌ها') }}</p>
+              <p class="text-xl font-bold text-blue-400">{{ i18n.number(takenSupplements()) }}/{{ i18n.number(totalSupplements()) }}</p>
             </div>
           </div>
         </div>
@@ -52,8 +53,8 @@ import { WorkoutLog } from '../../shared/models/workout.model';
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-amber-500/15 flex items-center justify-center text-2xl">🏋️</div>
             <div>
-              <p class="text-slate-400 text-xs">تمرین این هفته</p>
-              <p class="text-xl font-bold text-amber-400">{{ weekWorkouts() }}/۳</p>
+              <p class="text-slate-400 text-xs">{{ i18n.t('تمرین این هفته') }}</p>
+              <p class="text-xl font-bold text-amber-400">{{ i18n.number(weekWorkouts()) }}/{{ i18n.number(weeklyWorkoutGoal()) }}</p>
             </div>
           </div>
         </div>
@@ -63,7 +64,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Roadmap Donut -->
         <div class="card animate-slide-up">
-          <h3 class="text-sm font-semibold mb-4 text-slate-300">پیشرفت نقشه راه</h3>
+          <h3 class="text-sm font-semibold mb-4 text-slate-300">{{ i18n.t('پیشرفت نقشه راه') }}</h3>
           <div class="flex items-center justify-center">
             <div class="relative">
               <svg width="140" height="140" viewBox="0 0 140 140">
@@ -75,7 +76,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
                   style="transition: stroke-dasharray 1s ease"/>
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-2xl font-bold text-primary-400">{{ roadmapProgress() }}%</span>
+                <span class="text-2xl font-bold text-primary-400">{{ i18n.number(roadmapProgress()) }}%</span>
                 <span class="text-xs text-slate-400">{{ currentPhase()?.title }}</span>
               </div>
             </div>
@@ -85,7 +86,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
               <div class="flex items-center gap-2 text-xs">
                 <div class="w-2 h-2 rounded-full" [class]="phase.status === 'in-progress' ? 'bg-primary-400' : phase.status === 'completed' ? 'bg-green-400' : 'bg-slate-600'"></div>
                 <span class="flex-1 text-slate-400 truncate">{{ phase.title }}</span>
-                <span class="text-slate-500">{{ phase.progress }}%</span>
+                <span class="text-slate-500">{{ i18n.number(phase.progress) }}%</span>
               </div>
             }
           </div>
@@ -93,39 +94,39 @@ import { WorkoutLog } from '../../shared/models/workout.model';
 
         <!-- Habit Bar Chart -->
         <div class="card animate-slide-up" style="animation-delay:0.1s">
-          <h3 class="text-sm font-semibold mb-4 text-slate-300">عادت‌های ۷ روز اخیر</h3>
+          <h3 class="text-sm font-semibold mb-4 text-slate-300">{{ i18n.t('عادت‌های ۷ روز اخیر') }}</h3>
           <div class="flex items-end justify-between gap-1 h-32">
             @for (day of weekDaysHabits(); track day.date) {
-              <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="flex-1 h-full flex flex-col justify-end items-center gap-1">
                 <div class="w-full rounded-t transition-all duration-500"
                   [style.height.%]="day.percent"
                   [style.background-color]="day.percent >= 80 ? '#22c55e' : day.percent >= 40 ? '#f59e0b' : day.percent > 0 ? '#ef4444' : '#334155'">
                 </div>
-                <span class="text-[10px] text-slate-500">{{ day.label }}</span>
+                <span class="text-[10px] text-slate-500">{{ i18n.t(day.label) }}</span>
               </div>
             }
           </div>
           <div class="flex justify-between mt-2 text-[10px] text-slate-500">
-            <span>۰٪</span>
-            <span>۱۰۰٪</span>
+            <span>{{ i18n.t('۰٪') }}</span>
+            <span>{{ i18n.t('۱۰۰٪') }}</span>
           </div>
         </div>
 
         <!-- Workout Weekly -->
         <div class="card animate-slide-up" style="animation-delay:0.2s">
-          <h3 class="text-sm font-semibold mb-4 text-slate-300">ورزش این هفته</h3>
+          <h3 class="text-sm font-semibold mb-4 text-slate-300">{{ i18n.t('ورزش این هفته') }}</h3>
           <div class="space-y-3">
             @for (day of weekWorkoutDays(); track day.label) {
               <div class="flex items-center gap-3">
-                <span class="text-xs text-slate-400 w-16">{{ day.label }}</span>
+                <span class="text-xs text-slate-400 w-16">{{ i18n.t(day.label) }}</span>
                 <div class="flex-1 h-6 bg-slate-800 rounded-lg overflow-hidden">
                   @if (day.logged) {
                     <div class="h-full bg-gradient-to-l from-green-500 to-green-400 rounded-lg flex items-center justify-center">
-                      <span class="text-[10px] text-white font-medium">✓ انجام شده</span>
+                      <span class="text-[10px] text-white font-medium">{{ i18n.t('✓ انجام شده') }}</span>
                     </div>
                   } @else {
                     <div class="h-full flex items-center justify-center">
-                      <span class="text-[10px] text-slate-600">انجام نشده</span>
+                      <span class="text-[10px] text-slate-600">{{ i18n.t('انجام نشده') }}</span>
                     </div>
                   }
                 </div>
@@ -139,7 +140,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card animate-slide-up">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>⏰</span> الان چه کار کنم؟
+            <span>⏰</span> {{ i18n.t('الان چه کار کنم؟') }}
           </h3>
           @if (currentActivity()) {
             <div class="bg-primary-500/10 border border-primary-500/20 rounded-xl p-4">
@@ -149,16 +150,16 @@ import { WorkoutLog } from '../../shared/models/workout.model';
               }
             </div>
           } @else {
-            <p class="text-slate-500 text-sm">برنامه‌ای ثبت نشده</p>
+            <p class="text-slate-500 text-sm">{{ i18n.t('برنامه‌ای ثبت نشده') }}</p>
           }
         </div>
 
         <div class="card animate-slide-up" style="animation-delay:0.1s">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>⚠️</span> هشدار امروز
+            <span>⚠️</span> {{ i18n.t('هشدار امروز') }}
           </h3>
           <div class="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-            <p class="text-amber-300 text-sm">{{ todayWarning }}</p>
+            <p class="text-amber-300 text-sm">{{ i18n.t(todayWarning) }}</p>
           </div>
         </div>
       </div>
@@ -167,7 +168,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card animate-slide-up">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>✅</span> عادت‌های امروز
+            <span>✅</span> {{ i18n.t('عادت‌های امروز') }}
           </h3>
           @if (habits().length > 0) {
             <div class="space-y-2">
@@ -186,13 +187,13 @@ import { WorkoutLog } from '../../shared/models/workout.model';
               }
             </div>
           } @else {
-            <app-empty-state message="عادتی ثبت نشده" icon="✅"></app-empty-state>
+            <app-empty-state [message]="i18n.t('عادتی ثبت نشده')" icon="✅"></app-empty-state>
           }
         </div>
 
         <div class="card animate-slide-up" style="animation-delay:0.1s">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>💊</span> مکمل‌های امروز
+            <span>💊</span> {{ i18n.t('مکمل‌های امروز') }}
           </h3>
           @if (supplementSlots().length > 0) {
             <div class="space-y-3">
@@ -221,7 +222,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
               }
             </div>
           } @else {
-            <app-empty-state message="مکملی ثبت نشده" icon="💊"></app-empty-state>
+            <app-empty-state [message]="i18n.t('مکملی ثبت نشده')" icon="💊"></app-empty-state>
           }
         </div>
       </div>
@@ -232,16 +233,16 @@ import { WorkoutLog } from '../../shared/models/workout.model';
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-indigo-500/15 flex items-center justify-center text-2xl">🔔</div>
             <div>
-              <p class="text-sm font-semibold text-slate-300">یادآوری‌ها</p>
-              <p class="text-xs text-slate-500">اعلان‌های مرورگر برای یادآوری برنامه‌ها</p>
+              <p class="text-sm font-semibold text-slate-300">{{ i18n.t('یادآوری‌ها') }}</p>
+              <p class="text-xs text-slate-500">{{ i18n.t('اعلان‌های مرورگر برای یادآوری برنامه‌ها') }}</p>
             </div>
           </div>
           @if (notif.permission() === 'default') {
-            <button (click)="enableNotifications()" class="btn-primary text-sm">فعال‌سازی</button>
+            <button (click)="enableNotifications()" class="btn-primary text-sm">{{ i18n.t('فعال‌سازی') }}</button>
           } @else if (notif.permission() === 'granted') {
-            <span class="badge-green">فعال</span>
+            <span class="badge-green">{{ i18n.t('فعال') }}</span>
           } @else {
-            <span class="badge-red">مسدود شده</span>
+            <span class="badge-red">{{ i18n.t('مسدود شده') }}</span>
           }
         </div>
       </div>
@@ -249,7 +250,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       <!-- Heatmap -->
       <div class="card animate-slide-up">
         <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-          <span>🗓️</span> نقشه حرارتی عادت‌ها (۳۶۵ روز اخیر)
+          <span>🗓️</span> {{ i18n.t('نقشه حرارتی عادت‌ها (۳۶۵ روز اخیر)') }}
         </h3>
         <app-heatmap title="" [data]="heatmapData()"></app-heatmap>
       </div>
@@ -258,7 +259,7 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       @if (summary()) {
         <div class="card animate-slide-up">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>🤖</span> خلاصه هوشمند امروز
+            <span>🤖</span> {{ i18n.t('خلاصه هوشمند امروز') }}
           </h3>
           <div class="mb-3 p-3 rounded-xl" [class]="summary().overall.score >= 50 ? 'bg-green-500/10 border border-green-500/20' : 'bg-amber-500/10 border border-amber-500/20'">
             <p class="text-sm font-medium" [class]="summary().overall.score >= 50 ? 'text-green-400' : 'text-amber-400'">{{ summary().overall.mood }}</p>
@@ -281,35 +282,35 @@ import { WorkoutLog } from '../../shared/models/workout.model';
       @if (weeklyReport()) {
         <div class="card animate-slide-up">
           <h3 class="text-sm font-semibold mb-4 text-slate-300 flex items-center gap-2">
-            <span>📊</span> گزارش هفتگی ({{ weeklyReport().weekStart }} تا {{ weeklyReport().weekEnd }})
+            <span>📊</span> {{ i18n.t('گزارش هفتگی ({p0} تا {p1})', { p0: weeklyReport().weekStart, p1: weeklyReport().weekEnd }) }}
           </h3>
           <p class="text-xs text-slate-400 mb-4">{{ weeklyReport().summary }}</p>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
             <div class="text-center p-3 rounded-xl bg-slate-800/30">
-              <p class="text-2xl font-bold text-green-400">{{ weeklyReport().stats.habitCompletion }}%</p>
-              <p class="text-[10px] text-slate-500">عادت‌ها</p>
+              <p class="text-2xl font-bold text-green-400">{{ i18n.number(weeklyReport().stats.habitCompletion) }}%</p>
+              <p class="text-[10px] text-slate-500">{{ i18n.t('عادت‌ها') }}</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-slate-800/30">
-              <p class="text-2xl font-bold text-blue-400">{{ weeklyReport().stats.workoutDays }}</p>
-              <p class="text-[10px] text-slate-500">روز ورزش</p>
+              <p class="text-2xl font-bold text-blue-400">{{ i18n.number(weeklyReport().stats.workoutDays) }}</p>
+              <p class="text-[10px] text-slate-500">{{ i18n.t('روز ورزش') }}</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-slate-800/30">
-              <p class="text-2xl font-bold text-purple-400">{{ weeklyReport().stats.supplementRate }}%</p>
-              <p class="text-[10px] text-slate-500">مکمل‌ها</p>
+              <p class="text-2xl font-bold text-purple-400">{{ i18n.number(weeklyReport().stats.supplementRate) }}%</p>
+              <p class="text-[10px] text-slate-500">{{ i18n.t('مکمل‌ها') }}</p>
             </div>
             <div class="text-center p-3 rounded-xl bg-slate-800/30">
-              <p class="text-2xl font-bold text-amber-400">{{ weeklyReport().stats.totalSpent | number }}</p>
-              <p class="text-[10px] text-slate-500">هزینه هفتگی</p>
+              <p class="text-2xl font-bold text-amber-400">{{ i18n.number(weeklyReport().stats.totalSpent) }}</p>
+              <p class="text-[10px] text-slate-500">{{ i18n.t('هزینه ماه جاری') }}</p>
             </div>
           </div>
           <div class="flex items-end justify-between gap-1 h-24">
             @for (day of weeklyReport().dailyHabits; track day.day) {
-              <div class="flex-1 flex flex-col items-center gap-1">
+              <div class="flex-1 h-full flex flex-col justify-end items-center gap-1">
                 <div class="w-full rounded-t transition-all duration-500"
                   [style.height.%]="day.percent"
                   [style.background-color]="day.percent >= 80 ? '#22c55e' : day.percent >= 40 ? '#f59e0b' : day.percent > 0 ? '#ef4444' : '#334155'">
                 </div>
-                <span class="text-[10px] text-slate-500">{{ day.day }}</span>
+                <span class="text-[10px] text-slate-500">{{ i18n.t(day.day) }}</span>
               </div>
             }
           </div>
@@ -321,7 +322,8 @@ import { WorkoutLog } from '../../shared/models/workout.model';
     :host { display: block; }
   `]
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
   notif = inject(NotificationService);
 
@@ -341,6 +343,8 @@ export class DashboardComponent implements OnInit {
   takenSupplements = signal(0);
   totalSupplements = signal(0);
   weekWorkouts = signal(0);
+  weeklyWorkoutGoal = signal(3);
+  allHabitLogs = signal<HabitLog[]>([]);
   roadmapProgress = signal(0);
   heatmapData = signal<Record<string, number>>({});
   summary = signal<any>(null);
@@ -355,17 +359,31 @@ export class DashboardComponent implements OnInit {
   ];
   todayWarning = this.warnings[Math.floor(Math.random() * this.warnings.length)];
 
+  private languageSubscription?: Subscription;
+  private clock?: ReturnType<typeof setInterval>;
+
+  ngOnDestroy() {
+    this.languageSubscription?.unsubscribe();
+    if (this.clock) clearInterval(this.clock);
+  }
+
   ngOnInit() {
+    this.languageSubscription = this.i18n.languageChanges.subscribe(() => {
+      this.summary.set(null);
+      this.weeklyReport.set(null);
+      this.loadReports();
+      this.scheduleNotifications();
+    });
     this.loadData();
     this.updateCurrentTime();
-    setInterval(() => this.updateCurrentTime(), 60000);
+    this.clock = setInterval(() => this.updateCurrentTime(), 60000);
     this.scheduleNotifications();
   }
 
   async enableNotifications() {
     const granted = await this.notif.requestPermission();
     if (granted) {
-      this.notif.show('یادآوری فعال شد!', 'از این پس یادآوری‌های برنامه ارسال می‌شود');
+      this.notif.show(this.i18n.t('یادآوری فعال شد!'), this.i18n.t('از این پس یادآوری‌های برنامه ارسال می‌شود'));
       this.scheduleNotifications();
     }
   }
@@ -388,8 +406,8 @@ export class DashboardComponent implements OnInit {
           const delay = blockTime.getTime() - now.getTime();
           if (delay > 0 && delay < 12 * 60 * 60 * 1000) {
             this.notif.scheduleReminder(
-              '⏰ یادآوری برنامه',
-              `${block.activity} - ${block.startTime} تا ${block.endTime}`,
+              this.i18n.t('⏰ یادآوری برنامه'),
+              this.i18n.t('{activity} - {start} تا {end}', { activity: block.activity, start: block.startTime, end: block.endTime }),
               delay,
               `schedule-${block.id}`
             );
@@ -407,8 +425,8 @@ export class DashboardComponent implements OnInit {
           const delay = reminderTime.getTime() - now.getTime();
           if (delay > 0 && delay < 12 * 60 * 60 * 1000) {
             this.notif.scheduleReminder(
-              '✅ یادآوری عادت‌ها',
-              `${active.length} عادت فعال دارید. وضعیت امروز را بررسی کنید.`,
+              this.i18n.t('✅ یادآوری عادت‌ها'),
+              this.i18n.t('{count} عادت فعال دارید. وضعیت امروز را بررسی کنید.', { count: active.length }),
               delay,
               'habits-daily'
             );
@@ -419,6 +437,7 @@ export class DashboardComponent implements OnInit {
   }
 
   private loadData() {
+    this.api.getSettings().subscribe({ next: settings => { const goal = Number(settings['weeklyWorkoutGoal']); if (Number.isInteger(goal) && goal >= 1 && goal <= 7) this.weeklyWorkoutGoal.set(goal); } });
     this.api.getPhases().subscribe({
       next: (phases) => {
         this.phases.set(phases);
@@ -431,25 +450,20 @@ export class DashboardComponent implements OnInit {
       }
     });
 
-    this.api.getDailySummary().subscribe({
-      next: (summary) => this.summary.set(summary)
-    });
-
-    this.api.getWeeklyReport().subscribe({
-      next: (report) => this.weeklyReport.set(report)
-    });
+    this.loadReports();
 
     this.api.getHabits().subscribe({
       next: (habits) => {
         this.habits.set(habits.filter(h => h.active));
         this.totalHabits.set(habits.filter(h => h.active).length);
+        this.refreshHabitCounts();
       }
     });
 
     this.api.getHabitLogs(this.getToday()).subscribe({
       next: (logs) => {
-        this.habitLogs.set(logs);
-        this.completedHabits.set(logs.filter(l => l.done).length);
+        this.habitLogs.set(logs.filter(l => this.formatDate(new Date(l.date)) === this.getToday()));
+        this.refreshHabitCounts();
       }
     });
 
@@ -459,90 +473,80 @@ export class DashboardComponent implements OnInit {
         let total = 0;
         slots.forEach(s => total += s.supplements.length);
         this.totalSupplements.set(total);
+        this.refreshSupplementCount();
       }
     });
 
     this.api.getSupplementLogs(this.getToday()).subscribe({
       next: (logs) => {
         this.supplementLogs.set(logs);
-        this.takenSupplements.set(logs.filter(l => l.taken).length);
+        this.refreshSupplementCount();
       }
     });
 
     this.api.getSchedule().subscribe({
-      next: (blocks) => this.scheduleBlocks.set(blocks)
+      next: (blocks) => { this.scheduleBlocks.set(blocks); this.updateCurrentTime(); }
     });
 
     this.api.getWorkoutLogs().subscribe({
       next: (logs) => {
         this.workoutLogs.set(logs);
         const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekLogs = logs.filter(l => new Date(l.date) >= weekAgo && l.completed);
+        weekAgo.setHours(0, 0, 0, 0);
+        weekAgo.setDate(weekAgo.getDate() - ((weekAgo.getDay() + 1) % 7));
+        const weekEnd = new Date(weekAgo); weekEnd.setDate(weekEnd.getDate() + 7);
+        const weekLogs = logs.filter(l => new Date(l.date) >= weekAgo && new Date(l.date) < weekEnd && l.completed);
         const uniqueDays = new Set(weekLogs.map(l => new Date(l.date).toDateString()));
         this.weekWorkouts.set(uniqueDays.size);
       }
     });
 
-    // Load habit logs for last 7 days for chart
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = this.formatDate(d);
-      this.api.getHabitLogs(dateStr).subscribe({
-        next: (logs) => {
-          const done = logs.filter(l => l.done).length;
-          const total = this.totalHabits() || 1;
-          this._weekHabitData.push({ date: dateStr, done, total, percent: Math.round((done / total) * 100) });
-        }
-      });
-    }
-
-    // Load heatmap data for last 365 days
-    const heatmap: Record<string, number> = {};
-    const today = new Date();
-    let loaded = 0;
-    const totalDays = 365;
-    for (let i = 0; i < totalDays; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() - i);
-      const dateStr = this.formatDate(d);
-      this.api.getHabitLogs(dateStr).subscribe({
-        next: (logs) => {
-          const done = logs.filter(l => l.done).length;
-          const total = this.totalHabits() || 1;
-          heatmap[dateStr] = Math.round((done / total) * 100);
-          loaded++;
-          if (loaded === totalDays) {
-            this.heatmapData.set(heatmap);
-          }
-        },
-        error: () => {
-          loaded++;
-          if (loaded === totalDays) {
-            this.heatmapData.set(heatmap);
-          }
-        }
-      });
-    }
+    this.api.getHabitLogs().subscribe({ next: logs => { this.allHabitLogs.set(logs); this.refreshHabitCounts(); } });
   }
 
-  private _weekHabitData: any[] = [];
+  private habitPercent(date: string): number {
+    const ids = new Set(this.habits().map(h => h.id));
+    if (!ids.size) return 0;
+    const done = new Set(this.allHabitLogs().filter(l => l.done && ids.has(l.habitId) && this.formatDate(new Date(l.date)) === date).map(l => l.habitId));
+    return Math.round(done.size / ids.size * 100);
+  }
+
+  private loadReports() {
+    const language = this.i18n.language();
+    this.api.getDailySummary().subscribe({ next: summary => { if (this.i18n.language() === language) this.summary.set(summary); } });
+    this.api.getWeeklyReport().subscribe({ next: report => { if (this.i18n.language() === language) this.weeklyReport.set(report); } });
+  }
+
+  private refreshSupplementCount() {
+    const ids = new Set(this.supplementSlots().flatMap(slot => slot.supplements.map(s => s.id)));
+    this.takenSupplements.set(new Set(this.supplementLogs().filter(log => log.taken && ids.has(log.supplementId)).map(log => log.supplementId)).size);
+  }
+
+  private refreshHabitCounts() {
+    const ids = new Set(this.habits().map(h => h.id));
+    this.completedHabits.set(new Set(this.habitLogs().filter(l => l.done && ids.has(l.habitId)).map(l => l.habitId)).size);
+    const heatmap: Record<string, number> = {};
+    for (let i = 0; i < 365; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const date = this.formatDate(d); heatmap[date] = this.habitPercent(date);
+    }
+    this.heatmapData.set(heatmap);
+  }
 
   weekDaysHabits() {
-    const persianDays = ['جمعه', 'پنج', 'چهار', 'سه', 'دو', 'یک', 'امروز'];
-    return this._weekHabitData.map((d, i) => ({
-      date: d.date,
-      label: persianDays[i] || '',
-      percent: d.percent || 0
-    }));
+    const labels = ['یک', 'دو', 'سه', 'چهار', 'پنج', 'جمعه', 'شنبه'];
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i));
+      const date = this.formatDate(d);
+      return { date, label: i === 6 ? 'امروز' : labels[d.getDay()], percent: this.habitPercent(date) };
+    });
   }
 
   weekWorkoutDays() {
     const persianDays = ['شنبه', 'یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'];
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    startOfWeek.setDate(today.getDate() - ((today.getDay() + 1) % 7));
 
     return persianDays.map((label, i) => {
       const d = new Date(startOfWeek);
@@ -574,14 +578,11 @@ export class DashboardComponent implements OnInit {
   toggleHabit(habitId: number, done: boolean) {
     const today = this.getToday();
     this.api.logHabit(habitId, today, done).subscribe({
-      next: () => {
-        if (done) {
-          this.habitLogs.update(logs => [...logs, { id: Date.now(), habitId, date: today, done }]);
-          this.completedHabits.update(c => c + 1);
-        } else {
-          this.habitLogs.update(logs => logs.filter(l => !(l.habitId === habitId)));
-          this.completedHabits.update(c => c - 1);
-        }
+      next: (saved) => {
+        this.habitLogs.update(logs => [...logs.filter(log => log.habitId !== habitId), saved]);
+        this.allHabitLogs.update(logs => [...logs.filter(log => !(log.habitId === habitId && this.formatDate(new Date(log.date)) === today)), saved]);
+        this.refreshHabitCounts();
+        this.loadReports();
       }
     });
   }
@@ -592,14 +593,10 @@ export class DashboardComponent implements OnInit {
 
   toggleSupplement(supplementId: number, taken: boolean) {
     this.api.logSupplement(supplementId, taken).subscribe({
-      next: () => {
-        if (taken) {
-          this.supplementLogs.update(logs => [...logs, { id: Date.now(), supplementId, date: this.getToday(), taken, takenAt: new Date().toISOString() }]);
-          this.takenSupplements.update(c => c + 1);
-        } else {
-          this.supplementLogs.update(logs => logs.filter(l => l.supplementId !== supplementId));
-          this.takenSupplements.update(c => c - 1);
-        }
+      next: (saved) => {
+        this.supplementLogs.update(logs => [...logs.filter(log => log.supplementId !== supplementId), saved]);
+        this.refreshSupplementCount();
+        this.loadReports();
       }
     });
   }

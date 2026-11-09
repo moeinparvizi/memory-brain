@@ -1,3 +1,4 @@
+import { LocaleService } from './locale.service';
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -14,6 +15,7 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private http = inject(HttpClient);
+  private i18n = inject(LocaleService);
   private baseUrl = environment.apiUrl;
 
   // Auth
@@ -171,8 +173,8 @@ export class ApiService {
     return this.http.patch(`${this.baseUrl}/habits/reorder`, { habitIds: orderedIds });
   }
 
-  getHabitLogs(startDate: string): Observable<HabitLog[]> {
-    return this.http.get<HabitLog[]>(`${this.baseUrl}/habits/log?week=${startDate}`);
+  getHabitLogs(startDate?: string): Observable<HabitLog[]> {
+    return this.http.get<HabitLog[]>(`${this.baseUrl}/habits/log${startDate ? `?week=${startDate}` : ''}`);
   }
 
   logHabit(habitId: number, date: string, done: boolean): Observable<HabitLog> {
@@ -192,8 +194,8 @@ export class ApiService {
     return this.http.post<FinanceEntry>(`${this.baseUrl}/finance`, entry);
   }
 
-  updateFinanceEntry(month: string, entry: Partial<FinanceEntry>): Observable<FinanceEntry> {
-    return this.http.put<FinanceEntry>(`${this.baseUrl}/finance/${month}`, entry);
+  updateFinanceEntry(id: number, entry: Partial<FinanceEntry>): Observable<FinanceEntry> {
+    return this.http.put<FinanceEntry>(`${this.baseUrl}/finance/${id}`, entry);
   }
 
   getDebts(): Observable<Debt[]> {
@@ -250,6 +252,14 @@ export class ApiService {
     return this.http.patch<ChecklistItem>(`${this.baseUrl}/checklist/${id}/toggle`, { done });
   }
 
+  getSettings(): Observable<Record<string, any>> {
+    return this.http.get<Record<string, any>>(`${this.baseUrl}/settings`);
+  }
+
+  updateSettings(settings: Record<string, any>): Observable<Record<string, any>> {
+    return this.http.put<Record<string, any>>(`${this.baseUrl}/settings`, settings);
+  }
+
   exportData(): Observable<any> {
     return this.http.get<any>(`${this.baseUrl}/data/export`);
   }
@@ -263,10 +273,10 @@ export class ApiService {
   }
 
   getDailySummary(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/summary/daily`);
+    return this.http.get<any>(`${this.baseUrl}/summary/daily`, { params: { lang: this.i18n.language() } });
   }
 
   getWeeklyReport(): Observable<any> {
-    return this.http.get<any>(`${this.baseUrl}/summary/weekly`);
+    return this.http.get<any>(`${this.baseUrl}/summary/weekly`, { params: { lang: this.i18n.language() } });
   }
 }

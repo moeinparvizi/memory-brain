@@ -1,3 +1,4 @@
+import { LocaleService } from '../../../core/services/locale.service';
 import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -8,8 +9,9 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <aside
-      class="fixed top-0 right-0 h-full w-64 z-40 transition-transform duration-300 sidebar-glass"
-      [class.translate-x-full]="!isOpen"
+      class="fixed top-0 start-0 h-full w-64 z-40 transition-transform duration-300 sidebar-glass"
+      [class.translate-x-full]="!isOpen && i18n.language() === 'fa'"
+      [class.-translate-x-full]="!isOpen && i18n.language() === 'en'"
       [class.translate-x-0]="isOpen"
       [class.lg:translate-x-0]="true"
     >
@@ -17,12 +19,12 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- Logo -->
         <div class="p-6 border-b border-galaxy-border">
           <div class="flex items-center gap-3">
-            <img src="assets/icons/logo.svg" alt="مموری مغز" class="w-10 h-10 rounded-xl">
+            <img src="assets/icons/logo.svg" [alt]="i18n.t('مموری مغز')" class="w-10 h-10 rounded-xl">
             <div>
               <h1 class="text-lg font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
-                مموری مغز
+                {{ i18n.t('مموری مغز') }}
               </h1>
-              <p class="text-xs text-slate-500">مدیریت زندگی</p>
+              <p class="text-xs text-slate-500">{{ i18n.t('مدیریت زندگی') }}</p>
             </div>
           </div>
         </div>
@@ -37,7 +39,7 @@ import { AuthService } from '../../../core/services/auth.service';
               (click)="onNavClick()"
             >
               <span class="nav-icon">{{ item.icon }}</span>
-              <span class="nav-label">{{ item.label }}</span>
+              <span class="nav-label">{{ i18n.t(item.label) }}</span>
             </a>
           }
           <div class="pt-2 mt-2 border-t border-galaxy-border">
@@ -48,7 +50,7 @@ import { AuthService } from '../../../core/services/auth.service';
               (click)="onNavClick()"
             >
               <span class="nav-icon">⚙️</span>
-              <span class="nav-label">تنظیمات</span>
+              <span class="nav-label">{{ i18n.t('تنظیمات') }}</span>
             </a>
           </div>
         </nav>
@@ -61,7 +63,7 @@ import { AuthService } from '../../../core/services/auth.service';
                 <img [src]="authService.user().avatar" class="w-8 h-8 rounded-full border border-galaxy-border" alt="avatar">
               } @else {
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-sm font-bold">
-                  {{ authService.user()?.name?.charAt(0) || 'م' }}
+                  {{ authService.user()?.name?.charAt(0) || i18n.t('م') }}
                 </div>
               }
               <div class="flex-1 min-w-0">
@@ -75,7 +77,7 @@ import { AuthService } from '../../../core/services/auth.service';
             class="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-colors text-sm"
           >
             <span>🚪</span>
-            <span>خروج</span>
+            <span>{{ i18n.t('خروج') }}</span>
           </button>
         </div>
       </div>
@@ -97,7 +99,7 @@ import { AuthService } from '../../../core/services/auth.service';
       background: rgba(10, 10, 26, 0.85);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border-left: 1px solid rgba(139, 92, 246, 0.1);
+      border-inline-end: 1px solid rgba(139, 92, 246, 0.1);
       box-shadow: -4px 0 30px rgba(0, 0, 0, 0.3);
     }
 
@@ -144,6 +146,7 @@ import { AuthService } from '../../../core/services/auth.service';
   `]
 })
 export class SidebarComponent {
+  i18n = inject(LocaleService);
   @Input() isOpen = false;
   @Output() toggle = new EventEmitter<void>();
 

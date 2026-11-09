@@ -1,3 +1,4 @@
+import { LocaleService } from '../../../core/services/locale.service';
 import { Component, inject, signal, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -18,7 +19,7 @@ import { ApiService } from '../../../core/services/api.service';
               type="text"
               [(ngModel)]="query"
               (input)="onSearch()"
-              placeholder="جستجو در تمام بخش‌ها..."
+              [placeholder]="i18n.t('جستجو در تمام بخش‌ها...')"
               class="flex-1 bg-transparent text-white placeholder-slate-500 outline-none text-sm"
               autofocus
             >
@@ -27,7 +28,7 @@ import { ApiService } from '../../../core/services/api.service';
 
           <div class="search-results">
             @if (searching()) {
-              <div class="p-4 text-center text-slate-500 text-sm">در حال جستجو...</div>
+              <div class="p-4 text-center text-slate-500 text-sm">{{ i18n.t('در حال جستجو...') }}</div>
             } @else if (results().length > 0) {
               <div class="py-2">
                 @for (result of results(); track $index) {
@@ -36,7 +37,7 @@ import { ApiService } from '../../../core/services/api.service';
                     class="search-result-item"
                   >
                     <span class="text-lg">{{ result.icon }}</span>
-                    <div class="flex-1 min-w-0 text-right">
+                    <div class="flex-1 min-w-0 text-start">
                       <p class="text-sm text-white truncate">{{ result.label }}</p>
                       @if (result.detail) {
                         <p class="text-xs text-slate-500 truncate">{{ result.detail }}</p>
@@ -47,9 +48,9 @@ import { ApiService } from '../../../core/services/api.service';
                 }
               </div>
             } @else if (query.length >= 2) {
-              <div class="p-4 text-center text-slate-500 text-sm">نتیجه‌ای یافت نشد</div>
+              <div class="p-4 text-center text-slate-500 text-sm">{{ i18n.t('نتیجه‌ای یافت نشد') }}</div>
             } @else {
-              <div class="p-4 text-center text-slate-600 text-xs">حداقل ۲ حرف تایپ کنید</div>
+              <div class="p-4 text-center text-slate-600 text-xs">{{ i18n.t('حداقل ۲ حرف تایپ کنید') }}</div>
             }
           </div>
         </div>
@@ -114,6 +115,7 @@ import { ApiService } from '../../../core/services/api.service';
   `]
 })
 export class SearchComponent {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
   private router = inject(Router);
 
@@ -185,6 +187,6 @@ export class SearchComponent {
       'schedule': 'برنامه',
       'workout': 'ورزش',
     };
-    return labels[type] || type;
+    return this.i18n.t(labels[type] || type);
   }
 }

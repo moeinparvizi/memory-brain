@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, CdkDrag, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -14,24 +15,24 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">نقشه راه</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('نقشه راه') }}</h2>
         <button (click)="showPhaseModal.set(true)" class="btn-primary">
-          + فاز جدید
+          {{ i18n.t('+ فاز جدید') }}
         </button>
       </div>
 
       @if (phases().length === 0) {
-        <app-empty-state message="هنوز فازی اضافه نشده" icon="🗺️"></app-empty-state>
+        <app-empty-state [message]="i18n.t('هنوز فازی اضافه نشده')" icon="🗺️"></app-empty-state>
       } @else {
         <div class="relative">
           <!-- Timeline vertical line -->
-          <div class="absolute right-[22px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-blue-500 to-slate-600"></div>
+          <div class="absolute start-[22px] top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary-500 via-blue-500 to-slate-600"></div>
 
           <div cdkDropList (cdkDropListDropped)="onPhaseDrop($event)" class="space-y-0">
             @for (phase of phases(); track phase.id; let i = $index; let last = $last) {
               <div cdkDrag class="relative flex items-start gap-4 pb-2">
                 <!-- Drag handle -->
-                <div cdkDragHandle class="absolute -right-2 top-6 cursor-grab active:cursor-grabbing text-slate-500 hover:text-primary-400 z-10 select-none" title="بکشید">
+                <div cdkDragHandle class="absolute -start-2 top-6 cursor-grab active:cursor-grabbing text-slate-500 hover:text-primary-400 z-10 select-none" [title]="i18n.t('بکشید')">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
                     <circle cx="5" cy="3" r="1.5"/><circle cx="11" cy="3" r="1.5"/>
                     <circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/>
@@ -47,7 +48,7 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
                     } @else if (phase.status === 'in-progress') {
                       <span class="animate-pulse">●</span>
                     } @else {
-                      {{ i + 1 }}
+                      {{ i18n.number(i + 1) }}
                     }
                   </div>
                   @if (!last) {
@@ -68,8 +69,8 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
                       <!-- Progress bar -->
                       <div class="mb-3">
                         <div class="flex justify-between text-xs text-slate-400 mb-1">
-                          <span>پیشرفت</span>
-                          <span>{{ phase.progress }}%</span>
+                          <span>{{ i18n.t('پیشرفت') }}</span>
+                          <span>{{ i18n.number(phase.progress) }}%</span>
                         </div>
                         <app-progress-bar [value]="phase.progress" [color]="getProgressColor(phase.status)"></app-progress-bar>
                       </div>
@@ -80,14 +81,14 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
                           <span class="text-slate-400">📅</span> {{ phase.duration }}
                         </span>
                         <span class="inline-flex items-center gap-1 text-xs bg-slate-700/50 px-2.5 py-1 rounded-full">
-                          <span class="text-slate-400">📋</span> {{ phase.tasks.length }} تسک
+                          <span class="text-slate-400">📋</span> {{ i18n.t('{p0} تسک', { p0: phase.tasks.length }) }}
                         </span>
                         <span class="inline-flex items-center gap-1 text-xs bg-green-500/10 text-green-400 px-2.5 py-1 rounded-full">
-                          <span>✓</span> {{ getCompletedTasks(phase.tasks) }} انجام شده
+                          <span>✓</span> {{ i18n.t('{p0} انجام شده', { p0: getCompletedTasks(phase.tasks) }) }}
                         </span>
                         @if (getCompletedTasks(phase.tasks) < phase.tasks.length && phase.tasks.length > 0) {
                           <span class="inline-flex items-center gap-1 text-xs bg-amber-500/10 text-amber-400 px-2.5 py-1 rounded-full">
-                            <span>⏳</span> {{ phase.tasks.length - getCompletedTasks(phase.tasks) }} باقی‌مانده
+                            <span>⏳</span> {{ i18n.t('{p0} باقی‌مانده', { p0: phase.tasks.length - getCompletedTasks(phase.tasks) }) }}
                           </span>
                         }
                       </div>
@@ -104,16 +105,16 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
                     <div class="mt-4 pt-4 border-t border-dark-border">
                       <div class="flex items-center justify-between mb-3">
                         <h4 class="font-medium flex items-center gap-2">
-                          <span>📋</span> تسک‌ها
-                          <span class="text-xs text-slate-400">({{ getCompletedTasks(phase.tasks) }}/{{ phase.tasks.length }})</span>
+                          <span>📋</span> {{ i18n.t('تسک‌ها') }}
+                          <span class="text-xs text-slate-400">({{ i18n.number(getCompletedTasks(phase.tasks)) }}/{{ i18n.number(phase.tasks.length) }})</span>
                         </h4>
                         <button (click)="showTaskModal.set(true); selectedPhaseId.set(phase.id); $event.stopPropagation()" class="text-sm text-primary-400 hover:text-primary-300">
-                          + تسک جدید
+                          {{ i18n.t('+ تسک جدید') }}
                         </button>
                       </div>
 
                       @if (phase.tasks.length === 0) {
-                        <p class="text-slate-500 text-sm text-center py-4">تسکی اضافه نشده</p>
+                        <p class="text-slate-500 text-sm text-center py-4">{{ i18n.t('تسکی اضافه نشده') }}</p>
                       } @else {
                         <div cdkDropList (cdkDropListDropped)="onTaskDrop(phase.id, $event)" class="space-y-2">
                           @for (task of phase.tasks; track task.id) {
@@ -139,7 +140,7 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
                                   <p class="text-xs text-slate-400 mt-0.5 truncate">📎 {{ task.output }}</p>
                                 }
                               </div>
-                              <span class="text-xs text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded flex-shrink-0">ماه {{ task.month }}</span>
+                              <span class="text-xs text-slate-500 bg-slate-700/50 px-2 py-0.5 rounded flex-shrink-0">{{ i18n.t('ماه {p0}', { p0: task.month }) }}</span>
                               <div class="flex gap-0.5 opacity-0 group-hover/task:opacity-100 transition-opacity flex-shrink-0">
                                 <button (click)="editTask(phase.id, task); $event.stopPropagation()" class="p-1 hover:bg-dark-hover rounded">✏️</button>
                                 <button (click)="deleteTask(phase.id, task.id); $event.stopPropagation()" class="p-1 hover:bg-dark-hover rounded">🗑️</button>
@@ -161,31 +162,31 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
       @if (showPhaseModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" (click)="closePhaseModal()">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-semibold mb-4">{{ editingPhase() ? 'ویرایش فاز' : 'فاز جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingPhase() ? i18n.t('ویرایش فاز') : i18n.t('فاز جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">عنوان</label>
-                <input [(ngModel)]="phaseForm.title" class="input-field" placeholder="عنوان فاز">
+                <label class="label">{{ i18n.t('عنوان') }}</label>
+                <input [(ngModel)]="phaseForm.title" class="input-field" [placeholder]="i18n.t('عنوان فاز')">
               </div>
               <div>
-                <label class="label">مدت</label>
-                <input [(ngModel)]="phaseForm.duration" class="input-field" placeholder="مثال: 3 ماه">
+                <label class="label">{{ i18n.t('مدت') }}</label>
+                <input [(ngModel)]="phaseForm.duration" class="input-field" [placeholder]="i18n.t('مثال: 3 ماه')">
               </div>
               <div>
-                <label class="label">هدف</label>
-                <textarea [(ngModel)]="phaseForm.goal" class="input-field" rows="3" placeholder="هدف فاز"></textarea>
+                <label class="label">{{ i18n.t('هدف') }}</label>
+                <textarea [(ngModel)]="phaseForm.goal" class="input-field" rows="3" [placeholder]="i18n.t('هدف فاز')"></textarea>
               </div>
               <div>
-                <label class="label">وضعیت</label>
+                <label class="label">{{ i18n.t('وضعیت') }}</label>
                 <select [(ngModel)]="phaseForm.status" class="select-field">
-                  <option value="not-started">شروع نشده</option>
-                  <option value="in-progress">در حال انجام</option>
-                  <option value="completed">تکمیل شده</option>
+                  <option value="not-started">{{ i18n.t('شروع نشده') }}</option>
+                  <option value="in-progress">{{ i18n.t('در حال انجام') }}</option>
+                  <option value="completed">{{ i18n.t('تکمیل شده') }}</option>
                 </select>
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closePhaseModal()" class="btn-secondary">لغو</button>
-                <button (click)="savePhase()" class="btn-primary">ذخیره</button>
+                <button (click)="closePhaseModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="savePhase()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -196,23 +197,23 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
       @if (showTaskModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" (click)="closeTaskModal()">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-semibold mb-4">{{ editingTask() ? 'ویرایش تسک' : 'تسک جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingTask() ? i18n.t('ویرایش تسک') : i18n.t('تسک جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">موضوع</label>
-                <input [(ngModel)]="taskForm.topic" class="input-field" placeholder="موضوع تسک">
+                <label class="label">{{ i18n.t('موضوع') }}</label>
+                <input [(ngModel)]="taskForm.topic" class="input-field" [placeholder]="i18n.t('موضوع تسک')">
               </div>
               <div>
-                <label class="label">خروجی</label>
-                <input [(ngModel)]="taskForm.output" class="input-field" placeholder="خروجی مورد انتظار">
+                <label class="label">{{ i18n.t('خروجی') }}</label>
+                <input [(ngModel)]="taskForm.output" class="input-field" [placeholder]="i18n.t('خروجی مورد انتظار')">
               </div>
               <div>
-                <label class="label">ماه</label>
-                <input [(ngModel)]="taskForm.month" type="number" class="input-field" placeholder="شماره ماه">
+                <label class="label">{{ i18n.t('ماه') }}</label>
+                <input [(ngModel)]="taskForm.month" type="number" class="input-field" [placeholder]="i18n.t('شماره ماه')">
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeTaskModal()" class="btn-secondary">لغو</button>
-                <button (click)="saveTask()" class="btn-primary">ذخیره</button>
+                <button (click)="closeTaskModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="saveTask()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -221,7 +222,7 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          [message]="confirmMessage()"
+          [message]="i18n.t(confirmMessage())"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -273,6 +274,7 @@ import { Phase, Task } from '../../shared/models/roadmap.model';
   `]
 })
 export class RoadmapComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   phases = signal<Phase[]>([]);
@@ -460,9 +462,9 @@ export class RoadmapComponent implements OnInit {
 
   getStatusText(status: string): string {
     switch (status) {
-      case 'completed': return 'تکمیل شده';
-      case 'in-progress': return 'در حال انجام';
-      default: return 'شروع نشده';
+      case 'completed': return this.i18n.t('تکمیل شده');
+      case 'in-progress': return this.i18n.t('در حال انجام');
+      default: return this.i18n.t('شروع نشده');
     }
   }
 }

@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -13,21 +14,30 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">برنامه ورزشی</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('برنامه ورزشی') }}</h2>
         <button (click)="showSessionModal.set(true)" class="btn-primary">
-          + جلسه جدید
+          {{ i18n.t('+ جلسه جدید') }}
         </button>
+      </div>
+
+      <div class="card flex flex-wrap items-center gap-3">
+        <label for="weekly-goal" class="font-medium">{{ i18n.t('هدف ورزش در هفته') }}</label>
+        <select id="weekly-goal" class="select-field w-32" [ngModel]="weeklyGoal()" (ngModelChange)="saveGoal(+$event)">
+          @for (day of goalOptions; track day) { <option [ngValue]="day">{{ i18n.t('{p0} روز', { p0: day }) }}</option> }
+        </select>
+        <p class="text-sm text-slate-300">{{ i18n.t('{p0} از {p1} روز انجام شده', { p0: completedWeekDays(), p1: weeklyGoal() }) }}</p>
+        @if (goalError()) { <span role="alert" class="text-red-400 text-sm">{{ i18n.t(goalError()) }}</span> }
       </div>
 
       <!-- Weekly Overview Chart -->
       <div class="card">
         <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-          <span>📊</span> نمودار هفتگی
+          <span>📊</span> {{ i18n.t('نمودار هفتگی') }}
         </h3>
         <div class="grid grid-cols-7 gap-2">
           @for (day of weekDays; track day.date) {
             <div class="text-center">
-              <div class="text-xs text-slate-400 mb-2">{{ day.label }}</div>
+              <div class="text-xs text-slate-400 mb-2">{{ i18n.date(day.date + 'T12:00:00', 'weekdayShort') }}</div>
               <div class="relative h-32 bg-slate-800 rounded-lg overflow-hidden flex items-end justify-center">
                 <div
                   class="w-full rounded-t transition-all duration-500"
@@ -36,7 +46,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                 ></div>
               </div>
               <div class="text-xs mt-2 text-slate-400">
-                {{ getDayLogCount(day.date) }}/{{ sessions().length || 1 }}
+                {{ getDayLogCount(day.date) > 0 ? i18n.t('انجام شده') : i18n.t('ثبت نشده') }}
               </div>
             </div>
           }
@@ -44,15 +54,11 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
         <div class="flex items-center justify-center gap-6 mt-4 text-xs text-slate-400">
           <div class="flex items-center gap-1">
             <div class="w-3 h-3 rounded bg-green-500"></div>
-            <span>تمام شده</span>
-          </div>
-          <div class="flex items-center gap-1">
-            <div class="w-3 h-3 rounded bg-amber-500"></div>
-            <span>پاره‌ای</span>
+            <span>{{ i18n.t('تمام شده') }}</span>
           </div>
           <div class="flex items-center gap-1">
             <div class="w-3 h-3 rounded bg-slate-600"></div>
-            <span>انجام نشده</span>
+            <span>{{ i18n.t('انجام نشده') }}</span>
           </div>
         </div>
       </div>
@@ -61,7 +67,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
       @if (recentLogs().length > 0) {
         <div class="card">
           <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📝</span> آخرین ثبت‌ها
+            <span>📝</span> {{ i18n.t('آخرین ثبت‌ها') }}
           </h3>
           <div class="space-y-2">
             @for (log of recentLogs(); track log.id) {
@@ -73,7 +79,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                     <p class="text-xs text-slate-400">{{ formatDateShort(log.date) }}</p>
                   </div>
                 </div>
-                <span class="badge badge-success">انجام شده</span>
+                <span class="badge badge-success">{{ i18n.t('انجام شده') }}</span>
               </div>
             }
           </div>
@@ -82,26 +88,26 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
 
       <!-- Sessions with daily log grid -->
       @if (sessions().length === 0) {
-        <app-empty-state message="جلسه ورزشی ثبت نشده" icon="🏋️"></app-empty-state>
+        <app-empty-state [message]="i18n.t('جلسه ورزشی ثبت نشده')" icon="🏋️"></app-empty-state>
       } @else {
         <!-- Daily Log Table -->
         <div class="card overflow-x-auto">
           <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>🗓️</span> ثبت روزانه
+            <span>🗓️</span> {{ i18n.t('ثبت روزانه') }}
           </h3>
           <div class="flex items-center gap-2 mb-4 text-sm text-slate-400">
             <span>🔄</span>
-            <span>ردیف‌ها را بکشید و رها کنید تا ترتیب تغییر کند</span>
+            <span>{{ i18n.t('ردیف‌ها را بکشید و رها کنید تا ترتیب تغییر کند') }}</span>
           </div>
           <table class="w-full">
             <thead>
               <tr class="border-b border-dark-border">
                 <th class="w-10"></th>
-                <th class="text-right py-3 px-4 font-medium text-slate-400">جلسه</th>
+                <th class="text-start py-3 px-4 font-medium text-slate-400">{{ i18n.t('جلسه') }}</th>
                 @for (day of weekDays; track day.date) {
-                  <th class="text-center py-3 px-2 font-medium text-slate-400 text-sm">{{ day.label }}<br><span class="text-[10px] text-slate-500">{{ day.shortDate }}</span></th>
+                  <th class="text-center py-3 px-2 font-medium text-slate-400 text-sm">{{ i18n.date(day.date + 'T12:00:00', 'weekdayShort') }}<br><span class="text-[10px] text-slate-500">{{ day.shortDate }}</span></th>
                 }
-                <th class="text-center py-3 px-4 font-medium text-slate-400">مجموع</th>
+                <th class="text-center py-3 px-4 font-medium text-slate-400">{{ i18n.t('مجموع') }}</th>
               </tr>
             </thead>
             <tbody cdkDropList (cdkDropListDropped)="onDropSession($event)">
@@ -113,7 +119,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                   <td class="py-3 px-4">
                     <div>
                       <span class="font-medium">{{ session.day }}</span>
-                      <span class="text-xs text-slate-400 mr-2">{{ session.type }}</span>
+                      <span class="text-xs text-slate-400 ms-2">{{ session.type }}</span>
                     </div>
                   </td>
                   @for (day of weekDays; track day.date) {
@@ -130,7 +136,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                     </td>
                   }
                   <td class="text-center py-3 px-4">
-                    <span class="badge badge-info">{{ getSessionLogCount(session.id) }}/{{ 7 }}</span>
+                    <span class="badge badge-info">{{ i18n.number(getSessionLogCount(session.id)) }}/{{ i18n.number(7) }}</span>
                   </td>
                 </tr>
               }
@@ -161,7 +167,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                       <span>{{ exercise.name }}</span>
                       <div class="flex gap-2 text-slate-400 text-xs">
                         @if (exercise.sets) {
-                          <span>{{ exercise.sets }}×</span>
+                          <span>{{ i18n.number(exercise.sets) }}×</span>
                         }
                         @if (exercise.reps) {
                           <span>{{ exercise.reps }}</span>
@@ -183,7 +189,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
                 (click)="showExerciseModal.set(true); selectedSessionId.set(session.id)"
                 class="w-full btn-secondary text-sm"
               >
-                + تمرین
+                {{ i18n.t('+ تمرین') }}
               </button>
             </div>
           }
@@ -194,33 +200,33 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
       @if (showSessionModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" (click)="closeSessionModal()">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-semibold mb-4">{{ editingSession() ? 'ویرایش جلسه' : 'جلسه جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingSession() ? i18n.t('ویرایش جلسه') : i18n.t('جلسه جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">روز</label>
-                <input [(ngModel)]="sessionForm.day" class="input-field" placeholder="مثال: شنبه">
+                <label class="label">{{ i18n.t('روز') }}</label>
+                <input [(ngModel)]="sessionForm.day" class="input-field" [placeholder]="i18n.t('مثال: شنبه')">
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="label">زمان شروع</label>
+                  <label class="label">{{ i18n.t('زمان شروع') }}</label>
                   <input [(ngModel)]="sessionForm.startTime" type="time" class="input-field">
                 </div>
                 <div>
-                  <label class="label">زمان پایان</label>
+                  <label class="label">{{ i18n.t('زمان پایان') }}</label>
                   <input [(ngModel)]="sessionForm.endTime" type="time" class="input-field">
                 </div>
               </div>
               <div>
-                <label class="label">نوع</label>
-                <input [(ngModel)]="sessionForm.type" class="input-field" placeholder="مثال: قدرتی">
+                <label class="label">{{ i18n.t('نوع') }}</label>
+                <input [(ngModel)]="sessionForm.type" class="input-field" [placeholder]="i18n.t('مثال: قدرتی')">
               </div>
               <div>
-                <label class="label">مدت</label>
-                <input [(ngModel)]="sessionForm.duration" class="input-field" placeholder="مثال: 60 دقیقه">
+                <label class="label">{{ i18n.t('مدت') }}</label>
+                <input [(ngModel)]="sessionForm.duration" class="input-field" [placeholder]="i18n.t('مثال: 60 دقیقه')">
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeSessionModal()" class="btn-secondary">لغو</button>
-                <button (click)="saveSession()" class="btn-primary">ذخیره</button>
+                <button (click)="closeSessionModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="saveSession()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -231,29 +237,29 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
       @if (showExerciseModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in" (click)="closeExerciseModal()">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up" (click)="$event.stopPropagation()">
-            <h3 class="text-lg font-semibold mb-4">{{ editingExercise() ? 'ویرایش تمرین' : 'تمرین جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingExercise() ? i18n.t('ویرایش تمرین') : i18n.t('تمرین جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">نام تمرین</label>
-                <input [(ngModel)]="exerciseForm.name" class="input-field" placeholder="نام تمرین">
+                <label class="label">{{ i18n.t('نام تمرین') }}</label>
+                <input [(ngModel)]="exerciseForm.name" class="input-field" [placeholder]="i18n.t('نام تمرین')">
               </div>
               <div class="grid grid-cols-3 gap-4">
                 <div>
-                  <label class="label">ست</label>
+                  <label class="label">{{ i18n.t('ست') }}</label>
                   <input [(ngModel)]="exerciseForm.sets" type="number" class="input-field">
                 </div>
                 <div>
-                  <label class="label">تکرار</label>
+                  <label class="label">{{ i18n.t('تکرار') }}</label>
                   <input [(ngModel)]="exerciseForm.reps" class="input-field" placeholder="12">
                 </div>
                 <div>
-                  <label class="label">وزنه</label>
+                  <label class="label">{{ i18n.t('وزنه') }}</label>
                   <input [(ngModel)]="exerciseForm.weight" class="input-field" placeholder="20kg">
                 </div>
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeExerciseModal()" class="btn-secondary">لغو</button>
-                <button (click)="saveExercise()" class="btn-primary">ذخیره</button>
+                <button (click)="closeExerciseModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="saveExercise()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -262,7 +268,7 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -301,8 +307,12 @@ import { WorkoutSession, Exercise, WorkoutLog } from '../../shared/models/workou
   `]
 })
 export class WorkoutComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
+  weeklyGoal = signal(3);
+  goalError = signal('');
+  goalOptions = [1, 2, 3, 4, 5, 6, 7];
   sessions = signal<WorkoutSession[]>([]);
   workoutLogs = signal<WorkoutLog[]>([]);
   showSessionModal = signal(false);
@@ -325,14 +335,28 @@ export class WorkoutComponent implements OnInit {
   ngOnInit() {
     this.loadSessions();
     this.loadLogs();
+    this.api.getSettings().subscribe({ next: settings => {
+      const goal = Number(settings['weeklyWorkoutGoal']);
+      if (Number.isInteger(goal) && goal >= 1 && goal <= 7) this.weeklyGoal.set(goal);
+    }});
+  }
+
+  saveGoal(goal: number) {
+    this.goalError.set('');
+    this.api.updateSettings({ weeklyWorkoutGoal: goal }).subscribe({
+      next: () => this.weeklyGoal.set(goal),
+      error: () => this.goalError.set('ذخیره هدف انجام نشد؛ دوباره تلاش کنید.')
+    });
   }
 
   private generateWeekDays() {
     const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - ((today.getDay() + 1) % 7));
     const persianDays = ['یک', 'دو', 'سه', 'چهار', 'پنج', 'جمعه', 'شنبه'];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - i);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start);
+      d.setDate(d.getDate() + i);
       this.weekDays.push({
         date: this.formatDate(d),
         label: persianDays[d.getDay()],
@@ -396,9 +420,11 @@ export class WorkoutComponent implements OnInit {
   }
 
   getDayCompletionPercent(date: string): number {
-    const count = this.getDayLogCount(date);
-    const total = this.sessions().length || 1;
-    return Math.min((count / total) * 100, 100);
+    return this.getDayLogCount(date) > 0 ? 100 : 0;
+  }
+
+  completedWeekDays(): number {
+    return this.weekDays.filter(day => this.getDayLogCount(day.date) > 0).length;
   }
 
   getDayBarColor(date: string): string {
@@ -409,12 +435,12 @@ export class WorkoutComponent implements OnInit {
   }
 
   getSessionLogCount(sessionId: number): number {
-    return this.workoutLogs().filter(l => l.sessionId === sessionId && l.completed).length;
+    return this.workoutLogs().filter(l => l.sessionId === sessionId && l.completed && this.weekDays.some(day => day.date === this.formatDate(new Date(l.date)))).length;
   }
 
   getSessionName(sessionId: number): string {
     const session = this.sessions().find(s => s.id === sessionId);
-    return session ? `${session.day} - ${session.type}` : `جلسه ${sessionId}`;
+    return session ? `${session.day} - ${session.type}` : this.i18n.t('جلسه {id}', { id: sessionId });
   }
 
   recentLogs = () => {

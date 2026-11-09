@@ -1,3 +1,4 @@
+import { LocaleService } from '../../../core/services/locale.service';
 import { Component, Output, EventEmitter, inject, OnInit } from '@angular/core';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
@@ -13,6 +14,7 @@ import { PersianDatePipe } from '../../pipes/persian-date.pipe';
         <div class="flex items-center gap-4">
           <button
             (click)="toggleSidebar.emit()"
+            [attr.aria-label]="i18n.t('باز کردن منو')"
             class="lg:hidden p-2 rounded-xl hover:bg-galaxy-hover text-slate-300 transition-colors"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -20,7 +22,7 @@ import { PersianDatePipe } from '../../pipes/persian-date.pipe';
             </svg>
           </button>
           <div>
-            <h2 class="text-lg font-semibold text-white">{{ pageTitle }}</h2>
+            <h2 class="text-lg font-semibold text-white">{{ i18n.t(pageTitle) }}</h2>
             <p class="text-sm text-slate-400">{{ currentDate | persianDate }}</p>
           </div>
         </div>
@@ -31,13 +33,13 @@ import { PersianDatePipe } from '../../pipes/persian-date.pipe';
             class="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/50 border border-slate-700/50 text-slate-400 hover:border-primary-500/30 hover:text-slate-300 transition-all text-sm"
           >
             <span>🔍</span>
-            <span class="hidden md:inline">جستجو...</span>
+            <span class="hidden md:inline">{{ i18n.t('جستجو...') }}</span>
             <kbd class="hidden md:inline text-[10px] bg-slate-700/50 px-1.5 py-0.5 rounded">⌘K</kbd>
           </button>
           @if (currentActivity) {
             <div class="hidden md:flex activity-badge">
               <span class="activity-dot"></span>
-              <span class="text-sm text-primary-300">{{ currentActivity }}</span>
+              <span class="text-sm text-primary-300">{{ i18n.t(currentActivity) }}</span>
             </div>
           }
         </div>
@@ -82,6 +84,7 @@ import { PersianDatePipe } from '../../pipes/persian-date.pipe';
   `]
 })
 export class HeaderComponent implements OnInit {
+  i18n = inject(LocaleService);
   @Output() toggleSidebar = new EventEmitter<void>();
 
   private router = inject(Router);
@@ -100,7 +103,8 @@ export class HeaderComponent implements OnInit {
     '/finance': 'مالی',
     '/resources': 'منابع',
     '/checklist': 'چک‌لیست',
-    '/login': 'ورود'
+    '/login': 'ورود',
+    '/settings': 'تنظیمات'
   };
 
   ngOnInit() {
@@ -111,6 +115,7 @@ export class HeaderComponent implements OnInit {
       this.updateCurrentActivity();
     });
 
+    this.pageTitle = this.pageTitles[this.router.url] || 'داشبورد';
     this.updateCurrentActivity();
     setInterval(() => {
       this.currentDate = new Date();

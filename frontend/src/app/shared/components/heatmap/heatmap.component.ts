@@ -1,4 +1,5 @@
-import { Component, Input, signal, OnInit } from '@angular/core';
+import { LocaleService } from '../../../core/services/locale.service';
+import { Component, Input, signal, OnInit, OnChanges, inject } from '@angular/core';
 
 @Component({
   selector: 'app-heatmap',
@@ -6,15 +7,15 @@ import { Component, Input, signal, OnInit } from '@angular/core';
   template: `
     <div class="space-y-2">
       <div class="flex items-center justify-between">
-        <h4 class="text-xs text-slate-400">{{ title }}</h4>
+        <h4 class="text-xs text-slate-400">{{ i18n.t(title) }}</h4>
         <div class="flex items-center gap-1 text-[10px] text-slate-500">
-          <span>کم</span>
+          <span>{{ i18n.t('کم') }}</span>
           <div class="w-2.5 h-2.5 rounded-sm bg-slate-800"></div>
           <div class="w-2.5 h-2.5 rounded-sm bg-green-900"></div>
           <div class="w-2.5 h-2.5 rounded-sm bg-green-700"></div>
           <div class="w-2.5 h-2.5 rounded-sm bg-green-500"></div>
           <div class="w-2.5 h-2.5 rounded-sm bg-green-400"></div>
-          <span>زیاد</span>
+          <span>{{ i18n.t('زیاد') }}</span>
         </div>
       </div>
       <div class="overflow-x-auto">
@@ -38,13 +39,18 @@ import { Component, Input, signal, OnInit } from '@angular/core';
     :host { display: block; }
   `]
 })
-export class HeatmapComponent implements OnInit {
+export class HeatmapComponent implements OnInit, OnChanges {
+  i18n = inject(LocaleService);
   @Input() title = 'نقشه حرارتی';
   @Input() data: Record<string, number> = {};
 
   weeks = signal<{ date: string; value: number }[][]>([]);
 
   ngOnInit() {
+    this.generateCalendar();
+  }
+
+  ngOnChanges() {
     this.generateCalendar();
   }
 

@@ -1,6 +1,7 @@
 const express = require('express');
 const prisma = require('../config/db');
 const auth = require('../middleware/auth');
+const phaseProgress = require('../utils/phase-progress');
 
 const router = express.Router();
 
@@ -15,7 +16,7 @@ router.get('/phases', async (req, res, next) => {
       include: { tasks: { orderBy: { order: 'asc' } } },
       orderBy: { order: 'asc' },
     });
-    res.json(phases);
+    res.json(phases.map(phase => ({ ...phase, progress: phaseProgress(phase) })));
   } catch (err) {
     next(err);
   }

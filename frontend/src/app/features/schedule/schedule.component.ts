@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -12,9 +13,9 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">برنامه روزانه</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('برنامه روزانه') }}</h2>
         <button (click)="showModal.set(true)" class="btn-primary">
-          + بلوک جدید
+          {{ i18n.t('+ بلوک جدید') }}
         </button>
       </div>
 
@@ -24,23 +25,23 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
           (click)="activeTab.set('workday')"
           [class]="activeTab() === 'workday' ? 'btn-primary' : 'btn-ghost'"
         >
-          روز کاری
+          {{ i18n.t('روز کاری') }}
         </button>
         <button
           (click)="activeTab.set('weekend')"
           [class]="activeTab() === 'weekend' ? 'btn-primary' : 'btn-ghost'"
         >
-          روز تعطیل
+          {{ i18n.t('روز تعطیل') }}
         </button>
       </div>
 
       @if (filteredBlocks().length === 0) {
-        <app-empty-state message="برنامه‌ای ثبت نشده" icon="📅"></app-empty-state>
+        <app-empty-state [message]="i18n.t('برنامه‌ای ثبت نشده')" icon="📅"></app-empty-state>
       } @else {
         <!-- Timeline -->
         <div class="card" style="padding: 0; overflow: hidden;">
           <div class="timeline-scroll">
-            <div class="timeline-wrapper">
+            <div class="timeline-wrapper" [style.--hour-height.px]="hourHeight">
               <!-- Time labels on left -->
               <div class="time-labels">
                 @for (hour of hours; track hour) {
@@ -90,42 +91,42 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
       @if (showModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4">
-            <h3 class="text-lg font-semibold mb-4">{{ editingBlock() ? 'ویرایش بلوک' : 'بلوک جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingBlock() ? i18n.t('ویرایش بلوک') : i18n.t('بلوک جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">نوع روز</label>
+                <label class="label">{{ i18n.t('نوع روز') }}</label>
                 <select [(ngModel)]="form.dayType" class="select-field">
-                  <option value="workday">روز کاری</option>
-                  <option value="weekend">روز تعطیل</option>
+                  <option value="workday">{{ i18n.t('روز کاری') }}</option>
+                  <option value="weekend">{{ i18n.t('روز تعطیل') }}</option>
                 </select>
               </div>
               <div class="grid grid-cols-2 gap-4">
                 <div>
-                  <label class="label">زمان شروع</label>
+                  <label class="label">{{ i18n.t('زمان شروع') }}</label>
                   <input [(ngModel)]="form.startTime" type="time" class="input-field">
                 </div>
                 <div>
-                  <label class="label">زمان پایان</label>
+                  <label class="label">{{ i18n.t('زمان پایان') }}</label>
                   <input [(ngModel)]="form.endTime" type="time" class="input-field">
                 </div>
               </div>
               <div>
-                <label class="label">فعالیت</label>
-                <input [(ngModel)]="form.activity" class="input-field" placeholder="نام فعالیت">
+                <label class="label">{{ i18n.t('فعالیت') }}</label>
+                <input [(ngModel)]="form.activity" class="input-field" [placeholder]="i18n.t('نام فعالیت')">
               </div>
               <div>
-                <label class="label">دسته‌بندی</label>
+                <label class="label">{{ i18n.t('دسته‌بندی') }}</label>
                 <select [(ngModel)]="form.category" class="select-field">
-                  <option value="learning">یادگیری</option>
-                  <option value="work">کار</option>
-                  <option value="exercise">ورزش</option>
-                  <option value="personal">شخصی</option>
-                  <option value="commute">رفت‌وآمد</option>
+                  <option value="learning">{{ i18n.t('یادگیری') }}</option>
+                  <option value="work">{{ i18n.t('کار') }}</option>
+                  <option value="exercise">{{ i18n.t('ورزش') }}</option>
+                  <option value="personal">{{ i18n.t('شخصی') }}</option>
+                  <option value="commute">{{ i18n.t('رفت‌وآمد') }}</option>
                 </select>
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeModal()" class="btn-secondary">لغو</button>
-                <button (click)="save()" class="btn-primary">ذخیره</button>
+                <button (click)="closeModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="save()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -134,7 +135,7 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف این بلوک مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف این بلوک مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -146,26 +147,28 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
 
     .timeline-scroll {
       overflow-y: auto;
-      max-height: 70vh;
+      max-height: 75vh;
     }
 
     .timeline-wrapper {
       display: flex;
-      min-height: 900px;
+      padding-block: 16px;
     }
 
     .time-labels {
-      width: 52px;
+      width: 88px;
       flex-shrink: 0;
       position: relative;
     }
 
     .time-label {
-      height: 50px;
+      height: var(--hour-height);
       display: flex;
       align-items: flex-start;
       justify-content: flex-end;
-      padding-right: 8px;
+      padding-inline: 8px;
+      direction: ltr;
+      white-space: nowrap;
       font-size: 0.7rem;
       color: #64748b;
       transform: translateY(-6px);
@@ -178,7 +181,7 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
     }
 
     .grid-line {
-      height: 50px;
+      height: var(--hour-height);
       border-bottom: 1px solid rgba(148, 163, 184, 0.15);
     }
 
@@ -186,7 +189,7 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
       position: absolute;
       left: 4px;
       right: 4px;
-      border-right: 4px solid;
+      border-inline-start: 4px solid;
       border-radius: 6px;
       padding: 6px 10px;
       cursor: pointer;
@@ -275,6 +278,7 @@ import { ScheduleBlock } from '../../shared/models/schedule.model';
   `]
 })
 export class ScheduleComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   blocks = signal<ScheduleBlock[]>([]);
@@ -284,7 +288,15 @@ export class ScheduleComponent implements OnInit {
   confirmDelete = signal(false);
   private pendingDeleteId = 0;
 
-  hours = Array.from({ length: 18 }, (_, i) => i + 6);
+  hourHeight = 96;
+
+  get startHour(): number {
+    return Math.min(6, ...this.filteredBlocks().map(block => Number(block.startTime.split(':')[0])));
+  }
+
+  get hours(): number[] {
+    return Array.from({ length: 24 - this.startHour }, (_, i) => i + this.startHour);
+  }
 
   form: Partial<ScheduleBlock> = {
     dayType: 'workday',
@@ -316,7 +328,7 @@ export class ScheduleComponent implements OnInit {
 
   getEventTop(time: string): string {
     const [h, m] = time.split(':').map(Number);
-    return `${((h - 6) * 50) + (m / 60) * 50}px`;
+    return `${((h - this.startHour) + m / 60) * this.hourHeight}px`;
   }
 
   getEventHeight(start: string, end: string): string {
@@ -324,18 +336,18 @@ export class ScheduleComponent implements OnInit {
     const [eh, em] = end.split(':').map(Number);
     const startMin = sh * 60 + sm;
     const endMin = eh * 60 + em;
-    const height = ((endMin - startMin) / 60) * 50;
-    return `${Math.max(height, 28)}px`;
+    const height = ((endMin - startMin) / 60) * this.hourHeight;
+    return `${Math.max(height, 44)}px`;
   }
 
   showNowLine(): boolean {
     const hour = new Date().getHours();
-    return hour >= 6 && hour <= 23;
+    return hour >= this.startHour && hour <= 23;
   }
 
   getNowTop(): string {
     const now = new Date();
-    return `${((now.getHours() - 6) * 50) + (now.getMinutes() / 60) * 50}px`;
+    return this.getEventTop(`${now.getHours()}:${now.getMinutes()}`);
   }
 
   getCategoryColor(cat: string): string {

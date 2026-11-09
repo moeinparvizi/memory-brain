@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/services/api.service';
@@ -12,7 +13,7 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">چک‌لیست</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('چک‌لیست') }}</h2>
       </div>
 
       <div class="flex gap-2 flex-wrap">
@@ -20,7 +21,7 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
           (click)="filterCategory.set(null)"
           [class]="filterCategory() === null ? 'btn-primary' : 'btn-ghost'"
         >
-          همه
+          {{ i18n.t('همه') }}
         </button>
         @for (cat of categories(); track cat) {
           <button
@@ -33,24 +34,26 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
       </div>
 
       <div class="card">
-        <div class="flex gap-3 mb-4">
+        <form (ngSubmit)="addItem()" class="flex flex-wrap gap-3 mb-4">
           <input
             [(ngModel)]="newItemText"
-            class="input-field flex-1"
-            placeholder="آیتم جدید اضافه کنید..."
-            (keyup.enter)="addItem()"
+            name="itemText"
+            [attr.aria-label]="i18n.t('متن آیتم جدید')"
+            class="input-field flex-1 min-w-0"
+            [placeholder]="i18n.t('آیتم جدید اضافه کنید...')"
           >
-          <select [(ngModel)]="newItemCategory" class="select-field w-40">
-            <option value="">بدون دسته</option>
+          <select [(ngModel)]="newItemCategory" name="itemCategory" [attr.aria-label]="i18n.t('دسته آیتم جدید')" class="select-field w-40">
+            <option value="">{{ i18n.t('بدون دسته') }}</option>
             @for (cat of categories(); track cat) {
               <option [value]="cat">{{ cat }}</option>
             }
           </select>
-          <button (click)="addItem()" class="btn-primary">افزودن</button>
-        </div>
+          <button type="submit" [disabled]="saving()" class="btn-primary disabled:opacity-50">{{ saving() ? i18n.t('در حال افزودن…') : i18n.t('افزودن') }}</button>
+        </form>
 
+        @if (saveError()) { <p role="alert" class="text-red-400 text-sm mb-4">{{ i18n.t(saveError()) }}</p> }
         @if (filteredItems().length === 0) {
-          <app-empty-state message="آیتمی ثبت نشده" icon="📋"></app-empty-state>
+          <app-empty-state [message]="i18n.t('آیتمی ثبت نشده')" icon="📋"></app-empty-state>
         } @else {
           <div class="space-y-2">
             @for (item of filteredItems(); track item.id) {
@@ -74,7 +77,7 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف این آیتم مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف این آیتم مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -88,10 +91,13 @@ import { ChecklistItem } from '../../shared/models/checklist.model';
   `]
 })
 export class ChecklistComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   items = signal<ChecklistItem[]>([]);
   filterCategory = signal<string | null>(null);
+  saveError = signal('');
+  saving = signal(false);
   confirmDelete = signal(false);
   private pendingDeleteId = 0;
 
@@ -123,7 +129,9 @@ export class ChecklistComponent implements OnInit {
   }
 
   addItem() {
-    if (!this.newItemText.trim()) return;
+    if (this.saving()) return;
+    if (!this.newItemText.trim()) { this.saveError.set('متن آیتم را وارد کنید.'); return; }
+    this.saveError.set('');
 
     const item: Partial<ChecklistItem> = {
       text: this.newItemText.trim(),
@@ -132,11 +140,18 @@ export class ChecklistComponent implements OnInit {
       order: this.items().length
     };
 
+    this.saving.set(true);
     this.api.createChecklistItem(item).subscribe({
-      next: () => {
-        this.loadItems();
+      next: (saved) => {
+        this.filterCategory.set(null);
+        this.items.update(items => [...items, saved]);
         this.newItemText = '';
         this.newItemCategory = '';
+        this.saving.set(false);
+      },
+      error: () => {
+        this.saving.set(false);
+        this.saveError.set('ذخیره آیتم انجام نشد؛ اتصال خود را بررسی و دوباره تلاش کنید.');
       }
     });
   }

@@ -1,63 +1,58 @@
-const CACHE_NAME = 'memory-gohar-v1';
-const ASSETS_TO_CACHE = [
-  '/',
-  '/dashboard',
-  '/roadmap',
-  '/schedule',
-  '/workout',
-  '/supplements',
-  '/habits',
-  '/finance',
-  '/resources',
-  '/checklist',
-  '/login'
-];
+const CACHE_PREFIX = 'memory-gohar-';
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const IS_LOCAL = ['localhost', '127.0.0.1', '[::1]'].includes(self.location.hostname);
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
+  if (!IS_LOCAL) {
+    event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll([self.registration.scope])));
+  }
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names
+      .filter(name => name.startsWith(CACHE_PREFIX) && (IS_LOCAL || name !== CACHE_NAME))
+      .map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
 
 self.addEventListener('fetch', (event) => {
-  if (event.request.url.includes('/api/')) {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return new Response(JSON.stringify({ error: 'Offline' }), {
-          headers: { 'Content-Type': 'application/json' }
-        });
-      })
-    );
-  } else {
-    event.respondWith(
-      caches.match(event.request).then((response) => {
-        return response || fetch(event.request).then((fetchResponse) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, fetchResponse.clone());
-            return fetchResponse;
-          });
-        });
-      }).catch(() => {
-        if (event.request.destination === 'document') {
-          return caches.match('/');
-        }
-      })
-    );
+  const request = event.request;
+  const url = new URL(request.url);
+
+  if (url.pathname.includes('/api/')) {
+    event.respondWith(fetch(request).catch(() => new Response(
+      JSON.stringify({ error: 'Offline' }),
+      { status: 503, headers: { 'Content-Type': 'application/json' } }
+    )));
+    return;
   }
+
+  // Development bundles keep the same URLs between builds and must never be cached.
+  if (IS_LOCAL || request.method !== 'GET' || url.origin !== self.location.origin) return;
+
+  // Revalidate application pages and bundles on every request so a reload gets the latest build.
+  event.respondWith((async () => {
+    try {
+      const response = await fetch(request);
+      if (response.ok) {
+        const copy = response.clone();
+        event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.put(request, copy)));
+      }
+      return response;
+    } catch (error) {
+      const cached = await caches.match(request);
+      if (cached) return cached;
+      if (request.mode === 'navigate') {
+        const shell = await caches.match(self.registration.scope);
+        if (shell) return shell;
+      }
+      throw error;
+    }
+  })());
 });
 
 self.addEventListener('notificationclick', (event) => {

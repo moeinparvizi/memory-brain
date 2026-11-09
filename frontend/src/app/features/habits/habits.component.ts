@@ -1,3 +1,4 @@
+import { LocaleService } from '../../core/services/locale.service';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -13,24 +14,24 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
   template: `
     <div class="space-y-6">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold">عادت‌ها</h2>
+        <h2 class="text-2xl font-bold">{{ i18n.t('عادت‌ها') }}</h2>
         <button (click)="showModal.set(true)" class="btn-primary">
-          + عادت جدید
+          {{ i18n.t('+ عادت جدید') }}
         </button>
       </div>
 
       @if (habits().length === 0) {
-        <app-empty-state message="عادتی ثبت نشده" icon="✅"></app-empty-state>
+        <app-empty-state [message]="i18n.t('عادتی ثبت نشده')" icon="✅"></app-empty-state>
       } @else {
         <!-- Weekly Overview -->
         <div class="card">
           <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
-            <span>📊</span> نمودار هفتگی
+            <span>📊</span> {{ i18n.t('نمودار هفتگی') }}
           </h3>
           <div class="grid grid-cols-7 gap-2">
             @for (day of weekDays; track day.date) {
               <div class="text-center">
-                <div class="text-xs text-slate-400 mb-2">{{ day.label }}</div>
+                <div class="text-xs text-slate-400 mb-2">{{ i18n.date(day.date + 'T12:00:00', 'weekdayShort') }}</div>
                 <div class="relative h-32 bg-slate-800 rounded-lg overflow-hidden flex items-end justify-center">
                   <div
                     class="w-full rounded-t transition-all duration-500"
@@ -39,7 +40,7 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
                   ></div>
                 </div>
                 <div class="text-xs mt-2 text-slate-400">
-                  {{ getDayLogCount(day.date) }}/{{ habits().length }}
+                  {{ i18n.number(getDayLogCount(day.date)) }}/{{ i18n.number(habits().length) }}
                 </div>
               </div>
             }
@@ -47,15 +48,15 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
           <div class="flex items-center justify-center gap-6 mt-4 text-xs text-slate-400">
             <div class="flex items-center gap-1">
               <div class="w-3 h-3 rounded bg-green-500"></div>
-              <span>انجام شده</span>
+              <span>{{ i18n.t('انجام شده') }}</span>
             </div>
             <div class="flex items-center gap-1">
               <div class="w-3 h-3 rounded bg-amber-500"></div>
-              <span>پاره‌ای</span>
+              <span>{{ i18n.t('پاره‌ای') }}</span>
             </div>
             <div class="flex items-center gap-1">
               <div class="w-3 h-3 rounded bg-slate-600"></div>
-              <span>انجام نشده</span>
+              <span>{{ i18n.t('انجام نشده') }}</span>
             </div>
           </div>
         </div>
@@ -64,18 +65,18 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
         <div class="card overflow-x-auto">
           <div class="flex items-center gap-2 mb-4 text-sm text-slate-400">
             <span>🔄</span>
-            <span>ردیف‌ها را بکشید و رها کنید تا ترتیب تغییر کند</span>
+            <span>{{ i18n.t('ردیف‌ها را بکشید و رها کنید تا ترتیب تغییر کند') }}</span>
           </div>
           <table class="w-full">
             <thead>
               <tr class="border-b border-dark-border">
                 <th class="w-10"></th>
-                <th class="text-right py-3 px-4 font-medium text-slate-400">عادت</th>
+                <th class="text-start py-3 px-4 font-medium text-slate-400">{{ i18n.t('عادت') }}</th>
                 @for (day of weekDays; track day.date) {
-                  <th class="text-center py-3 px-2 font-medium text-slate-400 text-sm">{{ day.label }}</th>
+                  <th class="text-center py-3 px-2 font-medium text-slate-400 text-sm">{{ i18n.date(day.date + 'T12:00:00', 'weekdayShort') }}</th>
                 }
-                <th class="text-center py-3 px-4 font-medium text-slate-400">رگبار</th>
-                <th class="text-center py-3 px-4 font-medium text-slate-400">عملیات</th>
+                <th class="text-center py-3 px-4 font-medium text-slate-400">{{ i18n.t('رگبار') }}</th>
+                <th class="text-center py-3 px-4 font-medium text-slate-400">{{ i18n.t('عملیات') }}</th>
               </tr>
             </thead>
             <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
@@ -93,7 +94,7 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
                       <span>{{ habit.emoji || '✅' }}</span>
                       <span class="font-medium">{{ habit.name }}</span>
                       @if (!habit.active) {
-                        <span class="badge badge-secondary text-xs">غیرفعال</span>
+                        <span class="badge badge-secondary text-xs">{{ i18n.t('غیرفعال') }}</span>
                       }
                     </div>
                   </td>
@@ -111,7 +112,7 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
                     </td>
                   }
                   <td class="text-center py-3 px-4">
-                    <span class="badge badge-warning">{{ getStreak(habit.id) }} روز</span>
+                    <span class="badge badge-warning">{{ i18n.t('{p0} روز', { p0: getStreak(habit.id) }) }}</span>
                   </td>
                   <td class="text-center py-3 px-4">
                     <div class="flex gap-1 justify-center">
@@ -129,18 +130,18 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
       @if (showModal()) {
         <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fade-in">
           <div class="bg-dark-card border border-dark-border rounded-xl p-6 max-w-md w-full mx-4 animate-slide-up">
-            <h3 class="text-lg font-semibold mb-4">{{ editingHabit() ? 'ویرایش عادت' : 'عادت جدید' }}</h3>
+            <h3 class="text-lg font-semibold mb-4">{{ editingHabit() ? i18n.t('ویرایش عادت') : i18n.t('عادت جدید') }}</h3>
             <div class="space-y-4">
               <div>
-                <label class="label">نام</label>
-                <input [(ngModel)]="form.name" class="input-field" placeholder="نام عادت">
+                <label class="label">{{ i18n.t('نام') }}</label>
+                <input [(ngModel)]="form.name" class="input-field" [placeholder]="i18n.t('نام عادت')">
               </div>
               <div>
-                <label class="label">ایموجی</label>
+                <label class="label">{{ i18n.t('ایموجی') }}</label>
                 <input [(ngModel)]="form.emoji" class="input-field" placeholder="✅">
               </div>
               <div>
-                <label class="label">رنگ</label>
+                <label class="label">{{ i18n.t('رنگ') }}</label>
                 <input [(ngModel)]="form.color" class="input-field" placeholder="green">
               </div>
               <div class="flex items-center gap-2">
@@ -149,11 +150,11 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
                   [(ngModel)]="form.active"
                   class="w-4 h-4 rounded border-dark-border text-primary-500 focus:ring-primary-500"
                 >
-                <label class="label mb-0">فعال</label>
+                <label class="label mb-0">{{ i18n.t('فعال') }}</label>
               </div>
               <div class="flex gap-3 justify-end">
-                <button (click)="closeModal()" class="btn-secondary">لغو</button>
-                <button (click)="save()" class="btn-primary">ذخیره</button>
+                <button (click)="closeModal()" class="btn-secondary">{{ i18n.t('لغو') }}</button>
+                <button (click)="save()" class="btn-primary">{{ i18n.t('ذخیره') }}</button>
               </div>
             </div>
           </div>
@@ -162,7 +163,7 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
 
       @if (confirmDelete()) {
         <app-confirm-dialog
-          message="آیا از حذف این عادت مطمئن هستید؟"
+          [message]="i18n.t('آیا از حذف این عادت مطمئن هستید؟')"
           (confirmed)="confirmDeleteAction()"
           (cancelled)="confirmDelete.set(false)"
         ></app-confirm-dialog>
@@ -203,6 +204,7 @@ import { Habit, HabitLog } from '../../shared/models/habit.model';
   `]
 })
 export class HabitsComponent implements OnInit {
+  i18n = inject(LocaleService);
   private api = inject(ApiService);
 
   habits = signal<Habit[]>([]);

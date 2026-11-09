@@ -145,7 +145,7 @@ router.post('/log', async (req, res, next) => {
 router.get('/log', async (req, res, next) => {
   try {
     const { date } = req.query;
-    let where = {};
+    let where = { supplement: { timeSlot: { userId: req.userId } } };
     if (date) {
       const d = new Date(date);
       d.setHours(0, 0, 0, 0);
