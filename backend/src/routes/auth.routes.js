@@ -64,6 +64,9 @@ const googleClient = new OAuth2Client(
 // Google Sign-In: verify Google token and issue JWT
 router.post('/google', async (req, res, next) => {
   try {
+    if (!process.env.GOOGLE_CLIENT_ID || (process.env.NODE_ENV === 'production' && !process.env.AUTH_ALLOWED_GOOGLE_EMAIL)) {
+      return res.status(404).json({ error: 'Google sign-in is not enabled' });
+    }
     const { credential } = req.body;
     if (!credential) {
       return res.status(400).json({ error: 'Google credential is required' });
@@ -76,6 +79,10 @@ router.post('/google', async (req, res, next) => {
 
     const payload = ticket.getPayload();
     const { sub: googleId, email, name, picture } = payload;
+    if (process.env.NODE_ENV === 'production' &&
+        (!payload.email_verified || email?.toLowerCase() !== process.env.AUTH_ALLOWED_GOOGLE_EMAIL.toLowerCase())) {
+      return res.status(403).json({ error: 'This account is not allowed' });
+    }
 
     let user = await prisma.user.findUnique({ where: { googleId } });
 
@@ -120,7 +127,9 @@ router.post('/google', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { username, password } = req.body;
-    if (username === process.env.AUTH_USERNAME && password === process.env.AUTH_PASSWORD) {
+    if (process.env.AUTH_USERNAME && process.env.AUTH_PASSWORD &&
+        typeof username === 'string' && typeof password === 'string' &&
+        username === process.env.AUTH_USERNAME && password === process.env.AUTH_PASSWORD) {
       let user = await prisma.user.findFirst({ where: { email: 'admin@moein.local' } });
       if (!user) {
         user = await prisma.user.create({
@@ -202,12 +211,19 @@ router.get('/me', async (req, res, next) => {
 // Send OTP code to phone number
 router.post('/phone/send-otp', async (req, res, next) => {
   try {
+    if (!process.env.SMS_PROVIDER || (process.env.NODE_ENV === 'production' &&
+        (!process.env.AUTH_ALLOWED_PHONE || process.env.SMS_PROVIDER === 'console'))) {
+      return res.status(404).json({ error: 'Phone sign-in is not enabled' });
+    }
     const { phone } = req.body;
     if (!phone) {
       return res.status(400).json({ error: 'شماره موبایل الزامی است' });
     }
 
     const normalizedPhone = normalizePhone(phone);
+    if (process.env.NODE_ENV === 'production' && normalizedPhone !== normalizePhone(process.env.AUTH_ALLOWED_PHONE)) {
+      return res.status(403).json({ error: 'This account is not allowed' });
+    }
     const code = generateOtp();
     const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes
 
@@ -233,12 +249,19 @@ router.post('/phone/send-otp', async (req, res, next) => {
 // Verify OTP and login/register
 router.post('/phone/verify', async (req, res, next) => {
   try {
+    if (!process.env.SMS_PROVIDER || (process.env.NODE_ENV === 'production' &&
+        (!process.env.AUTH_ALLOWED_PHONE || process.env.SMS_PROVIDER === 'console'))) {
+      return res.status(404).json({ error: 'Phone sign-in is not enabled' });
+    }
     const { phone, code } = req.body;
     if (!phone || !code) {
       return res.status(400).json({ error: 'شماره موبایل و کد تایید الزامی است' });
     }
 
     const normalizedPhone = normalizePhone(phone);
+    if (process.env.NODE_ENV === 'production' && normalizedPhone !== normalizePhone(process.env.AUTH_ALLOWED_PHONE)) {
+      return res.status(403).json({ error: 'This account is not allowed' });
+    }
 
     // Find valid OTP
     const verification = await prisma.phoneVerification.findFirst({

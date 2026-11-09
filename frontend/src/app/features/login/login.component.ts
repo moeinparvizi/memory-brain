@@ -17,17 +17,6 @@ declare var google: any;
     <div class="min-h-screen flex items-center justify-center">
       <div class="card max-w-md w-full mx-4 p-8 animate-slide-up">
         <div class="mb-6"><app-language-switcher></app-language-switcher></div>
-        <!-- Demo credentials banner -->
-        <div class="bg-galaxy-primary/10 border border-galaxy-border rounded-xl px-4 py-3 mb-6">
-          <div class="flex items-center gap-2 text-xs text-galaxy-primary font-medium">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <span>{{ i18n.t('حالت نمایشی') }}</span>
-          </div>
-          <div class="mt-1 text-xs text-slate-500 font-mono">
-            {{ i18n.t('نام کاربری:') }} <span class="text-galaxy-primary">demo</span>&nbsp;|&nbsp;{{ i18n.t('رمز عبور:') }} <span class="text-galaxy-primary">demo123</span>
-          </div>
-        </div>
-
         <div class="text-center mb-8 pt-4">
           <img src="assets/icons/logo.svg" alt="Memory Brain" class="w-16 h-16 mx-auto mb-4 rounded-2xl">
           <h1 class="text-2xl font-bold bg-gradient-to-l from-primary-300 to-primary-500 bg-clip-text text-transparent">
@@ -37,8 +26,9 @@ declare var google: any;
         </div>
 
         <div class="space-y-4">
-          <!-- Google Sign-In Button -->
-          <div #googleBtn class="flex justify-center min-h-[44px]"></div>
+          @if (googleClientId) {
+            <div #googleBtn class="flex justify-center min-h-[44px]"></div>
+          }
 
           @if (error()) {
             <p class="text-red-400 text-sm text-center">{{ i18n.t(error()!) }}</p>
@@ -50,6 +40,7 @@ declare var google: any;
             </p>
           }
 
+          @if (googleClientId) {
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
               <div class="w-full border-t border-galaxy-border"></div>
@@ -58,6 +49,8 @@ declare var google: any;
               <span class="px-4 bg-galaxy-card text-slate-400">{{ i18n.t('یا') }}</span>
             </div>
           </div>
+
+          }
 
           <!-- Username / Password Login -->
           <form (ngSubmit)="login()" class="space-y-4" #loginForm="ngForm">
@@ -68,7 +61,7 @@ declare var google: any;
                 name="username"
                 type="text"
                 class="input-field"
-                [placeholder]="i18n.t('مثال: demo')"
+                [placeholder]="i18n.t('نام کاربری خود را وارد کنید')"
                 required
               >
             </div>
@@ -94,6 +87,7 @@ declare var google: any;
             </button>
           </form>
 
+          @if (phoneLoginEnabled) {
           <div class="relative my-6">
             <div class="absolute inset-0 flex items-center">
               <div class="w-full border-t border-galaxy-border"></div>
@@ -170,6 +164,7 @@ declare var google: any;
           <p class="text-xs text-center text-slate-500 mt-4">
             {{ i18n.t('حساب کاربری ندارید؟') }} <span class="text-galaxy-primary cursor-pointer hover:underline">{{ i18n.t('ثبت‌نام') }}</span>
           </p>
+          }
         </div>
       </div>
     </div>
@@ -194,6 +189,7 @@ export class LoginComponent implements OnInit, OnDestroy {
   error = signal<string | null>(null);
   otpSent = signal(false);
   googleClientId = environment.googleClientId;
+  phoneLoginEnabled = environment.phoneLoginEnabled;
 
   private languageSubscription?: Subscription;
 
@@ -211,7 +207,7 @@ export class LoginComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.loadGoogleScript();
+    if (this.googleClientId) this.loadGoogleScript();
   }
 
   login() {

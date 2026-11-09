@@ -5,3 +5,6 @@ dist/
 .DS_Store
 .angular/
 .vscode/
+
+# Local hosting credentials and private migration workspace
+.deployment/

@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <title>مموری مغز</title>
   <base href="/">
+  <script src="runtime-config.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0a0a1a">
   <meta name="description" content="مدیریت زندگی شخصی">
@@ -22,7 +23,7 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
+        navigator.serviceWorker.register('sw.js').then(
           (registration) => console.log('SW registered:', registration.scope),
           (err) => console.log('SW registration failed:', err)
         );

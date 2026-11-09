@@ -6,8 +6,8 @@
   "background_color": "#0a0a1a",
   "display": "standalone",
   "orientation": "any",
-  "scope": "/",
-  "start_url": "/dashboard",
+  "scope": "./",
+  "start_url": "./",
   "icons": [
     {
       "src": "assets/icons/logo.svg",

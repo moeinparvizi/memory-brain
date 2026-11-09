@@ -1,0 +1,26 @@
+# Create only a free API service. PostgreSQL is hosted separately on Prisma Postgres.
+services:
+  - type: web
+    name: memory-brain-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: backend
+    buildCommand: npm ci --include=dev && npx prisma generate
+    startCommand: npx prisma db push --skip-generate && npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGIN
+        value: https://moeinparvizi.github.io
+      - key: AUTH_USERNAME
+        sync: false
+      - key: AUTH_PASSWORD
+        sync: false

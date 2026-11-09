@@ -36,6 +36,13 @@ jobs:
         working-directory: ./frontend
         run: npm run build -- --base-href=/memory-brain/
 
+      - name: Configure the deployed API
+        working-directory: ./frontend
+        env:
+          API_BASE_URL: ${{ vars.API_BASE_URL }}
+          PUBLIC_GOOGLE_CLIENT_ID: ${{ vars.PUBLIC_GOOGLE_CLIENT_ID }}
+        run: node scripts/configure-pages.cjs
+
       - name: Add 404.html for SPA routing
         run: cp frontend/dist/moein-dashboard/browser/index.html frontend/dist/moein-dashboard/browser/404.html
 

@@ -1,5 +1,6 @@
 /** Interface messages only; never translate user-authored content. */
 export const EN: Record<string, string> = {
+  'نام کاربری خود را وارد کنید': 'Enter your username',
   "چک‌لیست": "Checklist",
   "همه": "All",
   "متن آیتم جدید": "New item text",

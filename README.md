@@ -69,7 +69,7 @@ npm run dev
 
 The API is available at `http://localhost:3001/api/v1`. Check `GET /api/v1/health` to verify that it is running.
 
-Sign in with the `AUTH_USERNAME` and `AUTH_PASSWORD` configured above. The login page's demo banner does not configure server credentials.
+Sign in with the private `AUTH_USERNAME` and `AUTH_PASSWORD` configured above. Credentials are never included in the frontend.
 
 **Optional sample data:** `npm run db:seed` populates a Persian sample dataset. **This script deletes existing application data first. Run it only against a disposable database.** A new account works without seeding.
 
@@ -120,7 +120,21 @@ Frontend tests cover component behavior, localization, and service-worker cachin
 
 The frontend production build is written to `frontend/dist/moein-dashboard/browser`. Serve it with SPA fallback routing and a reverse proxy for `/api`, as demonstrated by `frontend/nginx.conf`.
 
-The included GitHub Pages workflow publishes the frontend on pushes to `main`. GitHub Pages does not host the Express API; a functioning deployment also requires a separately hosted backend and appropriate API routing.
+## Online deployment
+
+The GitHub Pages address for this repository is **https://moeinparvizi.github.io/memory-brain/**. It becomes a functioning personal app after the API and database are configured and the Pages workflow succeeds. Sign in with the private hosting credentials; there is no shared demo account.
+
+1. Create a **Free** PostgreSQL database with a managed provider (the personal deployment uses Prisma Postgres in Frankfurt). Keep the connection string private. Use TLS (`sslmode=require`) and an appropriate pooled endpoint where the provider recommends it.
+2. Create a **Free** Render Node web service using `render.yaml`, or select root directory `backend`, build command `npm ci --include=dev && npx prisma generate`, start command `npx prisma db push --skip-generate && npm start`, Node 22, and health path `/api/v1/health`.
+3. Set `DATABASE_URL`, a random `JWT_SECRET`, and a private `AUTH_USERNAME` / strong `AUTH_PASSWORD` in Render. Set `CORS_ORIGIN=https://moeinparvizi.github.io`. Never commit these values. Do not run the sample-data seed against personal data.
+4. Enable **Settings → Pages → GitHub Actions** in the repository. Set the Actions repository variable `API_BASE_URL` to the actual Render HTTPS address ending in `/api/v1`. This is a public API address, not a secret. The build intentionally fails if the address is missing or invalid.
+5. Push to `main` or run the Pages workflow. The published app uses hash routes under `/memory-brain/`, so refreshing a screen works on static hosting. Runtime API configuration is generated into the build artifact; local development keeps its existing proxy.
+
+Google sign-in is hidden in the hosted build unless the public repository variable `PUBLIC_GOOGLE_CLIENT_ID` is set. Configure the same client on the backend, set `AUTH_ALLOWED_GOOGLE_EMAIL` to your own verified Google email, and register the frontend origin with Google before enabling it. Phone sign-in is disabled in the Pages deployment by default; enabling it requires a real SMS provider and `AUTH_ALLOWED_PHONE` on the backend, plus explicit frontend runtime configuration. Private username/password sign-in remains available.
+
+Render Free services sleep after inactivity, so the first API call can take longer. Database providers have their own storage/activity quotas. The Render Free database expires after 30 days and is not used by this configuration. No paid plan is required by `render.yaml`.
+
+`GET /api/v1/health` checks API availability; successful authenticated reads and writes must also be tested to verify the database. GitHub Pages hosts only the frontend, not Express or PostgreSQL.
 
 ## Project structure
 
